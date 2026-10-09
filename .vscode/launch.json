@@ -12,11 +12,11 @@
       "projectName": "neoforge",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
-        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Lace Mod\\neoforge\\build\\moddev\\clientRunProgramArgs.txt"
+        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Zipper Mod\\neoforge\\build\\moddev\\clientRunProgramArgs.txt"
       ],
       "vmArgs": [
-        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Lace Mod\\neoforge\\build\\moddev\\clientRunVmArgs.txt",
-        "-Dfml.modFolders\u003dzipper%%C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Lace Mod\\neoforge\\bin\\main"
+        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Zipper Mod\\neoforge\\build\\moddev\\clientRunVmArgs.txt",
+        "-Dfml.modFolders\u003dzipper%%C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Zipper Mod\\neoforge\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\neoforge\\run",
       "console": "internalConsole",
@@ -33,11 +33,11 @@
       "projectName": "neoforge",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
-        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Lace Mod\\neoforge\\build\\moddev\\dataRunProgramArgs.txt"
+        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Zipper Mod\\neoforge\\build\\moddev\\dataRunProgramArgs.txt"
       ],
       "vmArgs": [
-        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Lace Mod\\neoforge\\build\\moddev\\dataRunVmArgs.txt",
-        "-Dfml.modFolders\u003dzipper%%C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Lace Mod\\neoforge\\bin\\main"
+        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Zipper Mod\\neoforge\\build\\moddev\\dataRunVmArgs.txt",
+        "-Dfml.modFolders\u003dzipper%%C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Zipper Mod\\neoforge\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\neoforge\\run",
       "console": "internalConsole",
@@ -54,11 +54,11 @@
       "projectName": "neoforge",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
-        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Lace Mod\\neoforge\\build\\moddev\\serverRunProgramArgs.txt"
+        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Zipper Mod\\neoforge\\build\\moddev\\serverRunProgramArgs.txt"
       ],
       "vmArgs": [
-        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Lace Mod\\neoforge\\build\\moddev\\serverRunVmArgs.txt",
-        "-Dfml.modFolders\u003dzipper%%C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Lace Mod\\neoforge\\bin\\main"
+        "@C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Zipper Mod\\neoforge\\build\\moddev\\serverRunVmArgs.txt",
+        "-Dfml.modFolders\u003dzipper%%C:\\Users\\nikoz\\OneDrive\\Documents\\Projects\\Zipper Mod\\neoforge\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\neoforge\\run",
       "console": "internalConsole",

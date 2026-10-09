@@ -8,7 +8,7 @@
     "settings": {
         "java.configuration.updateBuildConfiguration": "automatic",
         "java.compile.nullAnalysis.mode": "disabled",
-        "java.jdt.ls.vmargs": "-Xmx2G -XX:+UseG1GC",
+        "java.jdt.ls.vmargs": "-Xmx4G -XX:+UseG1GC",
         "files.watcherExclude": {
             "**/.git/objects/**": true,
             "**/target/**": true, 

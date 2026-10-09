@@ -1,9 +1,9 @@
 package dev.nekotune.zipper.client.gui.config.dependencies;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +15,6 @@ import dev.nekotune.zipper.client.gui.config.widgets.container.SettingsList;
 import dev.nekotune.zipper.definition.DependencyInfo;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.ImageWidget;
 import net.minecraft.client.gui.components.SpriteIconButton;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
@@ -27,7 +26,8 @@ import net.minecraft.server.packs.PackType;
 
 /**
  * Screen which shows a list of active dependencies.
- * Dependencies in the list may be edited with a button, opening {@link DependencyEditScreen}.
+ * Dependencies in the list may be edited with a button, opening
+ * {@link DependencyEditScreen}.
  * Dependencies in the list may be removed with a button.
  * New dependencies may be added to the list with a button.
  */
@@ -43,16 +43,18 @@ public class DependenciesScreen extends AbstractConfigScreen {
                     .translatableWithFallback(KEY + "server-data", "Data Packs")
                     .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
 
-    private final Collection<DependencyInfo> original;
-    private final LinkedList<DependencyInfo> modifying;
+    private final Map<String, DependencyInfo> originals;
+    private final LinkedHashMap<String, DependencyInfo> modifying;
     private final PackType packType;
 
     public DependenciesScreen(final Screen lastScreen, final PackType packType) {
         super(TITLES.get(packType), lastScreen);
-        this.original = Config.INSTANCE.dependencies.stream()
+        this.originals = new HashMap<>();
+        Config.INSTANCE.dependencies.values().stream()
                 .filter(d -> d.type() == packType)
-                .toList();
-        this.modifying = new LinkedList<>(this.original);
+                .toList()
+                .forEach(d -> this.originals.put(d.fileName(), d));
+        this.modifying = new LinkedHashMap<>(this.originals);
         this.packType = packType;
     }
 
@@ -61,11 +63,13 @@ public class DependenciesScreen extends AbstractConfigScreen {
      * 
      * @param modified Ordered list of modified dependencies.
      */
-    protected void apply(final LinkedList<DependencyInfo> modified) {
-        Config.INSTANCE.dependencies = new ArrayList<>(Config.INSTANCE.dependencies.stream()
-                .filter(d -> !original.contains(d))
-                .toList());
-        Config.INSTANCE.dependencies.addAll(modified);
+    protected void apply(final LinkedHashMap<String, DependencyInfo> modified) {
+        this.originals.keySet().forEach(fileName -> {
+            Config.INSTANCE.dependencies.remove(fileName);
+        });
+        modified.forEach((final String fileName, final DependencyInfo d) -> {
+            Config.INSTANCE.dependencies.put(fileName, d);
+        });
     }
 
     /**
@@ -76,12 +80,8 @@ public class DependenciesScreen extends AbstractConfigScreen {
     private final void editDependency(final DependencyInfo dependency) {
         final DependencyEditScreen.OnApply injectModified = (final DependencyInfo original,
                 final DependencyInfo modified) -> {
-            this.modifying.replaceAll((final DependencyInfo candidate) -> {
-                if (candidate == original) {
-                    return modified;
-                }
-                return candidate;
-            });
+            this.modifying.remove(original.fileName());
+            this.modifying.put(modified.fileName(), modified);
             this.refresh();
         };
         this.minecraft.setScreen(new DependencyEditScreen(this, dependency, injectModified));
@@ -89,25 +89,26 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
     @Override
     protected void populateSettings(final SettingsList.SettingsContent.Builder builder) {
-        final var sorted = this.modifying.stream()
-                .sorted(Comparator.comparingInt(d -> d.loadPriority()))
+        final var sorted = this.modifying.values().stream()
+                .sorted(Comparator.comparingInt((final DependencyInfo d) -> d.loadPriority())
+                        .reversed())
                 .toList();
         for (final DependencyInfo dependency : sorted) {
             final List<LayoutElement> infoWidgets = new LinkedList<>();
 
             // Display the dependency's title
             int titleInfoWidth = this.getInnerWidth() - 4;
-            final var titleInfo = new StringWidget(Component.literal(dependency.title()), font);
+            final var titleInfo = new StringWidget(Component.literal(dependency.fileName()), font);
             infoWidgets.add(titleInfo);
 
             // Display the dependency's active hosts as badges next to the title
-            for (final DependencyInfo.Host host : dependency.hosts()) {
-                infoWidgets.add(SpacerElement.width(4));
-                final Resources.Sprite logoIcon = Resources.HostIcons.of(host).logo();
-                infoWidgets.add(ImageWidget.sprite(
-                        logoIcon.width(), logoIcon.height(), logoIcon.location()));
-                titleInfoWidth -= logoIcon.width() + 4;
-            }
+            // for (final DependencyInfo.Host host : dependency.hosts()) {
+            // infoWidgets.add(SpacerElement.width(4));
+            // final Resources.Sprite logoIcon = Resources.HostIcons.of(host).logo();
+            // infoWidgets.add(ImageWidget.sprite(
+            // logoIcon.width(), logoIcon.height(), logoIcon.location()));
+            // titleInfoWidth -= logoIcon.width() + 4;
+            // }
 
             // Button which modifies the dependency's information
             final Resources.Sprite editIcon = Resources.Gui.Sprites.Icons.EDIT;
@@ -129,7 +130,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
                     (final Button button) -> {
 
                         // On click, re-build the scroll list with this dependency removed.
-                        this.modifying.remove(dependency);
+                        this.modifying.remove(dependency.fileName());
                         this.refresh();
                     },
                     true)
@@ -160,7 +161,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 Component.literal("+").withStyle(ChatFormatting.BOLD),
                 (final Button button) -> {
                     final DependencyInfo dependency = DependencyInfo.createDefault(this.packType);
-                    this.modifying.add(dependency);
+                    this.modifying.put(dependency.fileName(), dependency);
                     this.refresh();
                     editDependency(dependency); // Automatically opens the editor for it
                 }).size(Button.DEFAULT_HEIGHT * 2, Button.DEFAULT_HEIGHT)

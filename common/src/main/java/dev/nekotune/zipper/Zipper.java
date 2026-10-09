@@ -62,9 +62,10 @@ public final class Zipper {
         private DownloadTaskThread() {
 
             // Build a list of download targets, excluding those already downloaded
-            this.targets = new ArrayList<>(Config.INSTANCE.dependencies.stream()
-                    .filter(target -> !target.isDownloaded())
-                    .toList());
+            this.targets = new ArrayList<>(Config.INSTANCE.dependencies.values().stream()
+                    .filter(target -> {
+                        return (!target.hosts().isEmpty()) && !target.fileExists();
+                    }).toList());
         }
 
         @Override

@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import dev.nekotune.zipper.Constants;
 import dev.nekotune.zipper.definition.web.Curseforge;
 import dev.nekotune.zipper.definition.web.Modrinth;
 import dev.nekotune.zipper.definition.web.WebHost;
@@ -32,6 +31,7 @@ import net.minecraft.server.packs.PackType;
  */
 public record DependencyInfo(
         PackType type,
+        String fileName,
         String slug,
         List<String> mirrors,
         Set<DependencyInfo.Host> hosts,
@@ -52,7 +52,7 @@ public record DependencyInfo(
      * @return The default construction of a DependencyInfo object.
      */
     public static final DependencyInfo createDefault(final PackType packType) {
-        return new DependencyInfo(packType, "new-dependency", List.of(),
+        return new DependencyInfo(packType, "New Dependency", "new-dependency", List.of(),
                 Set.of(DependencyInfo.Host.MODRINTH),
                 DependencyInfo.Mode.OPTIONAL_ENABLED, 0);
     }
@@ -76,18 +76,18 @@ public record DependencyInfo(
      */
     public static Path folder(final PackType packType) {
         return folder$CACHE.computeIfAbsent(packType, t -> {
-            final String subFolder;
+            final String rootFolder;
             switch (packType) {
                 case CLIENT_RESOURCES:
-                    subFolder = "resourcepacks";
+                    rootFolder = "resourcepacks";
                     break;
                 case SERVER_DATA:
-                    subFolder = "datapacks";
+                    rootFolder = "datapacks";
                     break;
                 default:
                     throw new UnsupportedOperationException();
             }
-            return Path.of("." + Constants.MOD_ID, subFolder);
+            return Path.of(rootFolder, "modpack");
         });
     }
 
@@ -105,15 +105,8 @@ public record DependencyInfo(
      * @return True if this pack's file already exists on the user's machine,
      *         false otherwise.
      */
-    public boolean isDownloaded() {
+    public boolean fileExists() {
         return Files.exists(this.packDir(), LinkOption.NOFOLLOW_LINKS);
-    }
-
-    /**
-     * @return The file name of the dependency when downloaded as a file.
-     */
-    public String fileName() {
-        return slug + ".zip";
     }
 
     /**
@@ -125,10 +118,10 @@ public record DependencyInfo(
     }
 
     /**
-     * @return {@link DependencyInfo#fileName} as a path.
+     * @return {@link DependencyInfo#fileName} + the file extension (.zip), as a Path object.
      */
     public Path file() {
-        return Path.of(fileName());
+        return Path.of(fileName() + ".zip");
     }
 
     /**
@@ -136,25 +129,6 @@ public record DependencyInfo(
      */
     public Path packDir() {
         return folder(type).resolve(file());
-    }
-
-    /**
-     * @return A formatted, readable string to represent the dependency.
-     */
-    public String title() {
-        final StringBuilder sb = new StringBuilder(slug.toLowerCase()
-                .replaceAll("[\\-_]", " "));
-        boolean capitalize = true;
-        for (int i = 0; i < sb.length(); i++) {
-            final char c = sb.charAt(i);
-            if (Character.isWhitespace(c)) {
-                capitalize = true;
-            } else if (capitalize) {
-                sb.setCharAt(i, Character.toUpperCase(c));
-                capitalize = false;
-            }
-        }
-        return sb.toString();
     }
 
     public static enum Host implements Supplier<WebHost> {

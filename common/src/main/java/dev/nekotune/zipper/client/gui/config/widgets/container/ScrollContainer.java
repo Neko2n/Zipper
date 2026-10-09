@@ -16,6 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
+// TODO fix input being passed to child widgets when outside of the bounds of the container
 /**
  * Widget which renders a scrolling list of child widgets.
  */

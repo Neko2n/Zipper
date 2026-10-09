@@ -69,11 +69,17 @@ public class DependencyEditScreen extends AbstractConfigScreen {
         final LinearLayout hostsLayout = LinearLayout.horizontal().spacing(4);
         this.settingsWidgets.hosts.values().forEach(hostsLayout::addChild);
 
-        builder.addLabeled(KEY + ".slug", this.settingsWidgets.slug());
-        builder.addElement(this.settingsWidgets.mirrors().dropdown());
-        builder.addLabeled(hostsKey, hostsLayout);
+        builder.addLabeled(KEY + ".file-name", this.settingsWidgets.fileName());
         builder.addLabeled(KEY + ".mode", this.settingsWidgets.mode());
         builder.addLabeled(KEY + ".load-priority", this.settingsWidgets.loadPriority());
+        builder.addLabeled(hostsKey, hostsLayout);
+        
+        final boolean isDownloaded = this.settingsWidgets.hosts.values().stream()
+                .anyMatch(toggle -> toggle.getValue());
+        if (isDownloaded) {
+            builder.addLabeled(KEY + ".slug", this.settingsWidgets.slug());
+            builder.addElement(this.settingsWidgets.mirrors().dropdown());
+        }
     }
 
     @Override
@@ -94,11 +100,9 @@ public class DependencyEditScreen extends AbstractConfigScreen {
                 .stream()
                 .filter(host -> this.settingsWidgets.hosts().get(host).getValue())
                 .toList());
-        if (hosts.isEmpty()) {
-            hosts.add(DependencyInfo.Host.MODRINTH);
-        }
         final var modified = new DependencyInfo(
                 this.editing.type(),
+                this.settingsWidgets.fileName().getValue(),
                 this.settingsWidgets.slug().getValue(),
                 this.settingsWidgets.mirrors().input().getValues().stream()
                         .filter(str -> !str.isBlank())
@@ -150,6 +154,7 @@ public class DependencyEditScreen extends AbstractConfigScreen {
      * @param loadPriority The integer input for the dependency's load priority.
      */
     protected static record SettingsWidgets(
+            EditBox fileName,
             EditBox slug,
             MirrorsWidgets mirrors,
             EnumMap<DependencyInfo.Host, ToggleInput.IconToggle> hosts,
@@ -164,34 +169,12 @@ public class DependencyEditScreen extends AbstractConfigScreen {
          */
         public static SettingsWidgets init(final DependencyEditScreen editScreen) {
 
-            // Primary slug setting
-            final var slugEditBox = new EditBox(editScreen.font, Button.DEFAULT_WIDTH,
+            // File name setting
+            final var fileNameEditBox = new EditBox(editScreen.font, Button.DEFAULT_WIDTH,
                     Button.DEFAULT_HEIGHT,
-                    Component.literal(editScreen.editing.slug()));
-            slugEditBox.setValue(editScreen.editing.slug());
-            slugEditBox.setFilter(DependencyInfo.SLUG_VALIDATOR);
-            slugEditBox.setResponder(text -> editScreen.backButton.active = true);
-
-            // Mirror slugs setting
-            final String mirrorsKey = KEY + ".mirrors";
-            final Component mirrorsHeader = Component.translatable(mirrorsKey);
-            final Tooltip mirrorsTooltip = Tooltip.create(
-                    Component.translatable(mirrorsKey + ".tooltip"));
-            final var mirrorsDropdown = new DropdownContainer(0, 0,
-                    editScreen.getInnerWidth() - 8, Button.DEFAULT_HEIGHT,
-                    mirrorsHeader, editScreen.font,
-                    isCollapsed -> editScreen.refresh());
-            mirrorsDropdown.setTooltip(mirrorsTooltip);
-            final var mirrorsList = new OrderedListInput(0, 0,
-                    mirrorsDropdown.getInnerWidth(), editScreen.font,
-                    $ -> {
-                        if (editScreen.settingsWidgets != null)
-                            editScreen.refresh();
-                    });
-            mirrorsList.setValues(editScreen.editing.mirrors());
-            mirrorsList.setResponder(values -> editScreen.backButton.active = true);
-            mirrorsList.setFilter(DependencyInfo.SLUG_VALIDATOR);
-            mirrorsDropdown.addChild(mirrorsList);
+                    Component.literal(editScreen.editing.fileName()));
+            fileNameEditBox.setValue(editScreen.editing.fileName());
+            fileNameEditBox.setResponder(text -> editScreen.backButton.active = true);
 
             // Hosts setting
             final EnumMap<DependencyInfo.Host, ToggleInput.IconToggle> hostToggles = new EnumMap<>(
@@ -229,10 +212,41 @@ public class DependencyEditScreen extends AbstractConfigScreen {
                 toggleInput.setResponder(newValue -> {
                     editScreen.backButton.active = true;
                     toggleInput.setTooltip(tooltip.apply(newValue));
+                    if (editScreen.settingsWidgets != null)
+                            editScreen.refresh();
                 });
                 hostToggles.put(host, toggleInput);
                 hostsLayout.addChild(toggleInput);
             }
+
+            // Primary slug setting
+            final var slugEditBox = new EditBox(editScreen.font, Button.DEFAULT_WIDTH,
+                    Button.DEFAULT_HEIGHT,
+                    Component.literal(editScreen.editing.slug()));
+            slugEditBox.setValue(editScreen.editing.slug());
+            slugEditBox.setFilter(DependencyInfo.SLUG_VALIDATOR);
+            slugEditBox.setResponder(text -> editScreen.backButton.active = true);
+
+            // Mirror slugs setting
+            final String mirrorsKey = KEY + ".mirrors";
+            final Component mirrorsHeader = Component.translatable(mirrorsKey);
+            final Tooltip mirrorsTooltip = Tooltip.create(
+                    Component.translatable(mirrorsKey + ".tooltip"));
+            final var mirrorsDropdown = new DropdownContainer(0, 0,
+                    editScreen.getInnerWidth() - 8, Button.DEFAULT_HEIGHT,
+                    mirrorsHeader, editScreen.font,
+                    isCollapsed -> editScreen.refresh());
+            mirrorsDropdown.setTooltip(mirrorsTooltip);
+            final var mirrorsList = new OrderedListInput(0, 0,
+                    mirrorsDropdown.getInnerWidth(), editScreen.font,
+                    $ -> {
+                        if (editScreen.settingsWidgets != null)
+                            editScreen.refresh();
+                    });
+            mirrorsList.setValues(editScreen.editing.mirrors());
+            mirrorsList.setResponder(values -> editScreen.backButton.active = true);
+            mirrorsList.setFilter(DependencyInfo.SLUG_VALIDATOR);
+            mirrorsDropdown.addChild(mirrorsList);
 
             // Mode setting
             final var modeInput = new SelectionInput<DependencyInfo.Mode>(0, 0,
@@ -258,7 +272,7 @@ public class DependencyEditScreen extends AbstractConfigScreen {
             loadPriorityEditBox.setResponder(text -> editScreen.backButton.active = true);
 
             final var mirrorsWidgets = new MirrorsWidgets(mirrorsDropdown, mirrorsList);
-            return new SettingsWidgets(slugEditBox, mirrorsWidgets, hostToggles, modeInput,
+            return new SettingsWidgets(fileNameEditBox, slugEditBox, mirrorsWidgets, hostToggles, modeInput,
                     loadPriorityEditBox);
         }
 

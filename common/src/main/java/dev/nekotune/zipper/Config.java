@@ -5,10 +5,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -34,7 +37,7 @@ public final class Config {
     public boolean production = false;
 
     @Since(1.0)
-    public ArrayList<DependencyInfo> dependencies = new ArrayList<>();
+    public Map<String, DependencyInfo> dependencies = new HashMap<>();
 
     @Since(1.0)
     public boolean hideForced = true;
@@ -117,13 +120,11 @@ public final class Config {
         }
     }
 
-    private static void sanitize(final Config config) {
-        if (config.dependencies.size() > 100) {
-            throw new IllegalStateException("Too many web dependencies. For user safety, downloads are capped at 100.");
-        }
-        config.dependencies = new ArrayList<>(config.dependencies.stream()
-                .distinct()
-                .filter((final DependencyInfo dependency) -> {
+    private static void sanitize(final Config config) throws IllegalStateException {
+        AtomicInteger webDependencies = new AtomicInteger(0);
+        List<DependencyInfo> dependencies = config.dependencies.keySet().stream()
+                .filter((final String fileName) -> {
+                    final DependencyInfo dependency = config.dependencies.get(fileName);
                     if (dependency.type() == null || dependency.slug() == null) {
                         return false;
                     }
@@ -135,8 +136,20 @@ public final class Config {
                         Constants.LOG.warn("[Config] Invalid slug \"" + slug + "\"; removing entry");
                         return false;
                     }
+                    if (!dependency.hosts().isEmpty()) {
+                        webDependencies.getAndIncrement();
+                    }
                     return true;
-                }).toList());
+                })
+                .map(fileName -> config.dependencies.get(fileName))
+                .toList();
+        if (webDependencies.get() > 100) {
+            throw new IllegalStateException("Too many web dependencies. For user safety, downloads are capped at 100.");
+        }
+        config.dependencies = new HashMap<>();
+        dependencies.forEach(dependency -> {
+            config.dependencies.put(dependency.fileName(), dependency);
+        });
         config.save();
     }
 }

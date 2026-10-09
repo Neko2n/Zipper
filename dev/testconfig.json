@@ -1,8 +1,57 @@
 {
   "production": false,
-  "dependencies": [
-    {
+  "dependencies": {
+    "Vein Miner": {
+      "type": "SERVER_DATA",
+      "fileName": "Vein Miner",
+      "slug": "",
+      "mirrors": [],
+      "hosts": [],
+      "mode": "FORCED",
+      "loadPriority": 0
+    },
+    "Dungeons & Taverns": {
+      "type": "SERVER_DATA",
+      "fileName": "Dungeons & Taverns",
+      "slug": "dungeons-and-taverns",
+      "mirrors": [],
+      "hosts": [
+        "MODRINTH",
+        "CURSEFORGE"
+      ],
+      "mode": "OPTIONAL_ENABLED",
+      "loadPriority": 0
+    },
+    "Towns & Towers": {
+      "type": "SERVER_DATA",
+      "fileName": "Towns & Towers",
+      "slug": "towns-and-towers",
+      "mirrors": [],
+      "hosts": [
+        "MODRINTH",
+        "CURSEFORGE"
+      ],
+      "mode": "OPTIONAL_DISABLED",
+      "loadPriority": 0
+    },
+    "Invalid Pack 1": {
+      "type": "SERVER_DATA",
+      "fileName": "Invalid Pack 1",
+      "slug": "big-invalid-slug-karate-freezer",
+      "mirrors": [
+        "big-invalid-slug-crab-reeling",
+        "big-invalid-slug-solder-pool"
+      ],
+      "hosts": [
+        "MODRINTH",
+        "CURSEFORGE"
+      ],
+      "mode": "SUPPORT",
+      "loadPriority": 2
+    },
+    "Fresh Animations": {
       "type": "CLIENT_RESOURCES",
+      "fileName": "Fresh Animations",
       "slug": "fresh-animations",
       "mirrors": [],
       "hosts": [
@@ -11,30 +60,32 @@
       "mode": "OPTIONAL_ENABLED",
       "loadPriority": 2
     },
-    {
+    "Chat Reporting Helper": {
       "type": "CLIENT_RESOURCES",
+      "fileName": "Chat Reporting Helper",
       "slug": "big-invalid-slug-foxtrot-lyre",
       "mirrors": [
         "chat-reporting-helper"
       ],
       "hosts": [
-        "MODRINTH"
+        "MODRINTH",
+        "CURSEFORGE"
       ],
       "mode": "OPTIONAL_ENABLED",
       "loadPriority": 1
     },
-    {
+    "Better Leaves": {
       "type": "CLIENT_RESOURCES",
-      "slug": "better-leaves",
+      "fileName": "Better Leaves",
+      "slug": "",
       "mirrors": [],
-      "hosts": [
-        "MODRINTH"
-      ],
+      "hosts": [],
       "mode": "OPTIONAL_ENABLED",
       "loadPriority": 3
     },
-    {
+    "Fast Better Grass": {
       "type": "CLIENT_RESOURCES",
+      "fileName": "Fast Better Grass",
       "slug": "fast-better-grass",
       "mirrors": [],
       "hosts": [
@@ -43,112 +94,72 @@
       "mode": "OPTIONAL_DISABLED",
       "loadPriority": 0
     },
-    {
+    "Fancy Crops": {
       "type": "CLIENT_RESOURCES",
+      "fileName": "Fancy Crops",
       "slug": "fancy-crops",
       "mirrors": [],
       "hosts": [
-        "MODRINTH"
+        "MODRINTH",
+        "CURSEFORGE"
       ],
       "mode": "FORCED",
       "loadPriority": 1
     },
-    {
+    "Low Fire Pack": {
       "type": "CLIENT_RESOURCES",
+      "fileName": "Low Fire Pack",
       "slug": "low-fire-pack",
       "mirrors": [],
       "hosts": [
-        "MODRINTH"
+        "MODRINTH",
+        "CURSEFORGE"
       ],
       "mode": "FORCED",
       "loadPriority": 3
     },
-    {
+    "Mandalas GUI - Dark Mode": {
       "type": "CLIENT_RESOURCES",
+      "fileName": "Mandalas GUI - Dark Mode",
       "slug": "mandalas-gui-dark-mode",
       "mirrors": [],
       "hosts": [
-        "MODRINTH"
+        "CURSEFORGE"
       ],
       "mode": "FORCED",
       "loadPriority": 2
     },
-    {
+    "Fresh Player Animations": {
       "type": "CLIENT_RESOURCES",
+      "fileName": "Fresh Player Animations",
       "slug": "tras-fresh-player",
       "mirrors": [],
       "hosts": [
-        "MODRINTH"
+        "MODRINTH",
+        "CURSEFORGE"
       ],
       "mode": "SUPPORT",
       "loadPriority": 0
     },
-    {
-      "type": "SERVER_DATA",
-      "slug": "veinminer",
-      "mirrors": [],
-      "hosts": [
-        "MODRINTH"
-      ],
-      "mode": "FORCED",
-      "loadPriority": 0
-    },
-    {
-      "type": "SERVER_DATA",
-      "slug": "dungeons-and-taverns",
-      "mirrors": [],
-      "hosts": [
-        "MODRINTH"
-      ],
-      "mode": "OPTIONAL_ENABLED",
-      "loadPriority": 0
-    },
-    {
-      "type": "SERVER_DATA",
-      "slug": "towns-and-towers",
-      "mirrors": [],
-      "hosts": [
-        "MODRINTH"
-      ],
-      "mode": "OPTIONAL_DISABLED",
-      "loadPriority": 0
-    },
-    {
+    "Invalid Pack 2": {
       "type": "CLIENT_RESOURCES",
+      "fileName": "Invalid Pack 2",
       "slug": "big-invalid-slug-scuba-hamsteak",
       "mirrors": [],
       "hosts": [
-        "MODRINTH"
+        "MODRINTH",
+        "CURSEFORGE"
       ],
       "mode": "FORCED",
       "loadPriority": 4
-    },
-    {
-      "type": "SERVER_DATA",
-      "slug": "big-invalid-slug-karate-freezer",
-      "mirrors": [
-        "big-invalid-slug-crab-reeling",
-        "big-invalid-slug-solder-pool"
-      ],
-      "hosts": [
-        "MODRINTH"
-      ],
-      "mode": "SUPPORT",
-      "loadPriority": 2
-    },
-    {
-      "type": "SERVER_DATA",
-      "slug": "%%&@*(#&*))&*#^%&(*&.'][-+--__=?532jk/23r",
-      "mirrors": [],
-      "hosts": [
-        "MODRINTH"
-      ],
-      "mode": "FORCED",
-      "loadPriority": 0
     }
-  ],
-  "hideForced": false,
+  },
+  "hideForced": true,
   "warnEnabled": true,
   "promptEnabled": true,
-  "disableCompatibilityWarnings": false
+  "disableCompatibilityWarnings": false,
+  "buttonOffset": {
+    "x": 0,
+    "y": 0
+  }
 }

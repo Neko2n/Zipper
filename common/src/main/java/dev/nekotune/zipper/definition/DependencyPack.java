@@ -27,7 +27,7 @@ import net.minecraft.world.flag.FeatureFlagSet;
  */
 public class DependencyPack extends Pack {
 
-	public static final int TOKEN_COLOR = 0xFFF5AA42;
+    public static final int TOKEN_COLOR = 0xFFF5AA42;
 
     private static final Component BADGE = Component.literal(" (modpack)")
             .withStyle(ChatFormatting.BOLD);
@@ -58,7 +58,7 @@ public class DependencyPack extends Pack {
      */
     public static DependencyPack from(final DependencyInfo info) throws IOException {
         final var location = new PackLocationInfo(info.packId(),
-                Component.literal(info.title()), SOURCE, Optional.empty());
+                Component.literal(info.fileName()), SOURCE, Optional.empty());
         final Pack.ResourcesSupplier supplier;
         if (Files.isDirectory(info.packDir())) {
             supplier = new PathPackResources.PathResourcesSupplier(info.packDir());
@@ -85,7 +85,7 @@ public class DependencyPack extends Pack {
 
     @Override
     public Component getTitle() {
-        return Component.literal(info.title());
+        return Component.literal(info.fileName());
     }
 
     public static final class ModpackResources extends DependencyPack {
@@ -93,14 +93,17 @@ public class DependencyPack extends Pack {
         /**
          * The directory which holds modpack resources.
          */
-        private static final Path PATH = Path.of("resources");
-        private static final Path ASSETS = PATH.resolve("assets");
-        private static final Path DATA = PATH.resolve("data");
+        private static final String FOLDER = "modpack";
+        private static final Path ASSETS_PATH = Path.of("resourcepacks", FOLDER, "assets");
+        private static final Path DATA_PATH = Path.of("datapacks", FOLDER, "data");
 
         private static final EnumMap<PackType, ModpackResources> cache = new EnumMap<>(PackType.class);
 
         private ModpackResources(final DependencyInfo info) {
-            super(info, ModpackResources$Info.LOCATION, ModpackResources$Info.SUPPLIER,
+            super(info, ModpackResources$Info.LOCATION,
+                    info.type() == PackType.CLIENT_RESOURCES
+                            ? new PathPackResources.PathResourcesSupplier(ASSETS_PATH.getParent())
+                            : new PathPackResources.PathResourcesSupplier(DATA_PATH.getParent()),
                     ModpackResources$Info.META, ModpackResources$Info.SELECTION_CONFIG);
         }
 
@@ -118,13 +121,14 @@ public class DependencyPack extends Pack {
         }
 
         private static ModpackResources define(final PackType packType) throws IOException {
-            if (!Files.exists(DATA)) {
-                Files.createDirectories(DATA);
+            if (!Files.exists(DATA_PATH)) {
+                Files.createDirectories(DATA_PATH);
             }
-            if (!Files.exists(ASSETS)) {
-                Files.createDirectories(ASSETS);
+            if (!Files.exists(ASSETS_PATH)) {
+                Files.createDirectories(ASSETS_PATH);
             }
-            final var info = new DependencyInfo(packType, ModpackResources$Info.ID, List.of(), Set.of(),
+            final var info = new DependencyInfo(packType, ModpackResources$Info.ID,
+                    ModpackResources$Info.ID, List.of(), Set.of(),
                     DependencyInfo.Mode.FORCED, 0);
             final ModpackResources instance = new ModpackResources(info);
             cache.put(packType, instance);
@@ -136,7 +140,6 @@ public class DependencyPack extends Pack {
             public static final Component NAME = Component.literal("modpack resources");
             public static final PackLocationInfo LOCATION = new PackLocationInfo(ID,
                     NAME, PackSource.BUILT_IN, Optional.empty());
-            public static final Pack.ResourcesSupplier SUPPLIER = new PathPackResources.PathResourcesSupplier(PATH);
             public static final Metadata META = new Metadata(NAME, PackCompatibility.COMPATIBLE,
                     FeatureFlagSet.of(), List.of());
             public static final PackSelectionConfig SELECTION_CONFIG = new PackSelectionConfig(

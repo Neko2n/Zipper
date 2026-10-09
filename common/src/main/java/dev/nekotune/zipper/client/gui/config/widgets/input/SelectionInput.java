@@ -21,12 +21,16 @@ public class SelectionInput<T extends Enum<T>> extends Button {
             final Set<T> values, final T defaultValue, final Button.OnPress onPress) {
         super(x, y, width, height, Component.empty(), onPress, Button.DEFAULT_NARRATION);
         this.values = new LinkedList<>(values);
-        this.index = this.values.indexOf(defaultValue);
+        this.setValue(defaultValue);
         this.setMessage(this.getMessage());
     }
 
     public T getValue() {
         return this.values.get(this.index);
+    }
+
+    public void setValue(final T value) {
+        this.index = this.values.indexOf(value);
     }
 
     public void assignTooltip(final T value, final Tooltip tooltip) {

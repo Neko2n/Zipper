@@ -29,7 +29,7 @@ public class DependencyPackSource implements RepositorySource {
     public void loadPacks(final Consumer<Pack> onLoad) {
 
         // Load web dependencies
-        for (final DependencyInfo dependency : Config.INSTANCE.dependencies) {
+        for (final DependencyInfo dependency : Config.INSTANCE.dependencies.values()) {
             if (dependency.type() != this.packType)
                 continue;
             if (dependency.mode() == DependencyInfo.Mode.SUPPORT)
