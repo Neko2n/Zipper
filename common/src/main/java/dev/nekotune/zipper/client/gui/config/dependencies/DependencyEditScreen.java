@@ -8,6 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import dev.nekotune.zipper.Resources;
+import dev.nekotune.zipper.client.gui.AbstractPopupScreen;
 import dev.nekotune.zipper.client.gui.config.AbstractConfigScreen;
 import dev.nekotune.zipper.client.gui.config.widgets.container.DropdownContainer;
 import dev.nekotune.zipper.client.gui.config.widgets.container.SettingsList;
@@ -119,6 +120,11 @@ public class DependencyEditScreen extends AbstractConfigScreen {
         return true;
     }
 
+    @Override
+    public Component getBackButtonMessage() {
+        return Component.translatableWithFallback(KEY + ".button.back", "Apply");
+    }
+
     /**
      * Widgets which make up the modifiable settings of a dependency.
      * 
@@ -182,24 +188,21 @@ public class DependencyEditScreen extends AbstractConfigScreen {
             final Tooltip hostsTooltip = Tooltip.create(
                     Component.translatable(hostsKey + ".tooltip"));
 
-            // Dropdown container which holds the input text boxes for all of the web host APIs
+            // Dropdown container which holds the input text boxes for all of the web host
+            // APIs
             final var hostsDropdown = new DropdownContainer(0, 0,
                     editScreen.getInnerWidth() - 8, Button.DEFAULT_HEIGHT, 4,
                     hostsHeader, editScreen.font,
                     isCollapsed -> editScreen.refresh());
             hostsDropdown.setTooltip(hostsTooltip);
 
-            // Callback for pressing the "?" button next to the slug input boxes
-            final Button.OnPress onPressHelp = $ -> {
-
-            };
-
             // Build slug input text boxes for each web host API
             final EnumMap<DependencyInfo.Host, HostsSettings.HostWidget> hostsWidgets = new EnumMap<>(
                     DependencyInfo.Host.class);
             for (final DependencyInfo.Host host : DependencyInfo.Host.values()) {
                 final HostsSettings.HostWidget hostWidget = new HostsSettings.HostWidget(
-                        host, 0, 0, hostsDropdown.getInnerWidth(), editScreen.font, onPressHelp);
+                        host, 0, 0, hostsDropdown.getInnerWidth(), editScreen.font,
+                        $ -> editScreen.minecraft.setScreen(new HelpButtonPopupScreen(editScreen, host)));
                 hostWidget.setResponder(values -> editScreen.backButton.active = true);
                 hostWidget.slugInput.setValue(editScreen.editing.downloadSlugs()
                         .getOrDefault(host, ""));
@@ -251,7 +254,7 @@ public class DependencyEditScreen extends AbstractConfigScreen {
                     final Resources.Sprite logo = this.getHostIcon();
                     this.setHostIcon(logo);
                     this.children.add(this.hostIcon);
-                    
+
                     // Button that shows information about download hosts and where to find slugs
                     this.helpButton = Button.builder(Component.literal("?"), onPressHelp)
                             .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
@@ -336,15 +339,26 @@ public class DependencyEditScreen extends AbstractConfigScreen {
         }
     }
 
+    /**
+     * Screen that shows when you click the "?" button next to a host's slug input
+     * text box.
+     */
+    public static final class HelpButtonPopupScreen extends AbstractPopupScreen {
+
+        public final DependencyInfo.Host host;
+
+        protected HelpButtonPopupScreen(final DependencyEditScreen covering, final DependencyInfo.Host host) {
+            super(covering, 200, 100, Component.empty());
+            this.host = host;
+        }
+
+        // TODO render help images for each host
+    }
+
     @FunctionalInterface
     public static interface OnApply extends BiConsumer<DependencyInfo, DependencyInfo> {
 
         @Override
         void accept(final DependencyInfo original, final DependencyInfo modified);
-    }
-
-    @Override
-    public Component getBackButtonMessage() {
-        return Component.translatableWithFallback(KEY + ".button.back", "Apply");
     }
 }
