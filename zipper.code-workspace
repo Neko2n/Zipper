@@ -245,6 +245,10 @@
                     "foreground": "#a6a1c7",
                     "italic": false
                 },
+                "recordComponent:java": {
+                    "foreground": "#a6a1c7",
+                    "italic": false
+                },
                 "property:java": {
                     "foreground": "#bcdcec",
                     "italic": true

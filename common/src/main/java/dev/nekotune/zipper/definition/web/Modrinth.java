@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.definition.DependencyInfo;
+import dev.nekotune.zipper.definition.DependencyInfo.Host;
 import dev.nekotune.zipper.definition.web.api.ModrinthAPI.*;
 import dev.nekotune.zipper.definition.web.api.WebAPI.APIResponse;
 import net.minecraft.server.packs.PackType;
@@ -15,6 +17,11 @@ public final class Modrinth extends WebHost {
     public static final Modrinth INSTANCE = new Modrinth();
 
     private Modrinth() {
+    }
+
+    @Override
+    protected Host hostType() {
+        return DependencyInfo.Host.MODRINTH;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package dev.nekotune.zipper;
 
 import dev.nekotune.zipper.definition.DependencyInfo;
-
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
 public class Resources {
@@ -64,7 +64,11 @@ public class Resources {
     	}
     }
     
-    public static record Sprite(ResourceLocation location, int width, int height) {}
+    public static record Sprite(ResourceLocation location, int width, int height) {
+        public void render(final GuiGraphics guiGraphics, final int x, final int y) {
+            guiGraphics.blitSprite(this.location, x, y, this.width, this.height);
+        }
+    }
     public static record HostIcons(Sprite logo, Sprite buttonOn, Sprite buttonOff) {
         public static HostIcons of(final DependencyInfo.Host host) {
             switch (host) {

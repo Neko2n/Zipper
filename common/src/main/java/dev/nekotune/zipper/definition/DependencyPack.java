@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import dev.nekotune.zipper.Config;
 import net.minecraft.ChatFormatting;
@@ -128,8 +127,7 @@ public class DependencyPack extends Pack {
                 Files.createDirectories(ASSETS_PATH);
             }
             final var info = new DependencyInfo(packType, ModpackResources$Info.ID,
-                    ModpackResources$Info.ID, List.of(), Set.of(),
-                    DependencyInfo.Mode.FORCED, 0);
+                    DependencyInfo.Mode.FORCED, 0, new EnumMap<>(DependencyInfo.Host.class));
             final ModpackResources instance = new ModpackResources(info);
             cache.put(packType, instance);
             return instance;

@@ -32,13 +32,16 @@ public class DropdownContainer extends AbstractContainerWidget {
     private List<GuiEventListener> children = new ArrayList<>();
     protected Font font;
     private int headerHeight;
+    private int padding;
     private int contentMargin = 24;
     private boolean collapsed = true;
 
     public DropdownContainer(final int x, final int y, final int width, final int height,
-            final Component header, final Font font, final DropdownContainer.OnClick onClick) {
+            final int padding, final Component header, final Font font,
+            final DropdownContainer.OnClick onClick) {
         super(x, y, width, height, header);
         this.headerHeight = height;
+        this.padding = padding;
         this.font = font;
         this.onClick = onClick;
         this.headerText = new StringWidget(header, font);
@@ -47,6 +50,14 @@ public class DropdownContainer extends AbstractContainerWidget {
     @Override
     public List<? extends GuiEventListener> children() {
         return this.children;
+    }
+
+    /**
+     * Sets the padding between the dropdown's listed children.
+     * @param padding The padding, in pixels
+     */
+    public void setPadding(final int padding) {
+        this.padding = padding;
     }
 
     private void updateLayout() {
@@ -66,7 +77,7 @@ public class DropdownContainer extends AbstractContainerWidget {
      */
     public void addChild(final AbstractWidget child) {
         this.children.add(child);
-        this.layout.addChild(child);
+        this.layout.addChild(child, settings -> settings.paddingVertical(this.padding/2));
         this.collapseChild(child);
         this.updateLayout();
     }

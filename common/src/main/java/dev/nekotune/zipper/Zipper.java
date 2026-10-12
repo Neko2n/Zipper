@@ -64,7 +64,8 @@ public final class Zipper {
             // Build a list of download targets, excluding those already downloaded
             this.targets = new ArrayList<>(Config.INSTANCE.dependencies.values().stream()
                     .filter(target -> {
-                        return (!target.hosts().isEmpty()) && !target.fileExists();
+                        final boolean isWebDependency = !target.downloadSlugs().values().stream().allMatch(String::isBlank);
+                        return isWebDependency && !target.fileExists();
                     }).toList());
         }
 
@@ -87,7 +88,7 @@ public final class Zipper {
             String report = "[Zipper] [Download Thread] Dependencies download SUCCESS; Took " + downloadTime
                     + " ms; Downloaded: [ ";
             for (final DependencyInfo target : DownloadManager.getDownloaded()) {
-                report += target.slug() + ", ";
+                report += target.fileName() + ", ";
             }
             report = (report + "]").replace(", ]", " ]");
             Constants.LOG.debug(report);

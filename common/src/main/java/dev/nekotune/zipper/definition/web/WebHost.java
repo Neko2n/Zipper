@@ -17,6 +17,8 @@ import net.minecraft.server.packs.PackType;
 public abstract class WebHost {
 
     protected static final int HTTP_TIMEOUT_MILLIS = 30000;
+
+    protected abstract DependencyInfo.Host hostType();
     
     protected abstract APIResponse<Path> GET(final String slug,
             final PackType packType, final Path downloadTo) throws
@@ -24,9 +26,9 @@ public abstract class WebHost {
                     SecurityException;
     
     /**
-     * Calls {@link APIResponse#GET(String, PackType)} with a timeout guard.
+     * Calls {@link WebHost#GET()} with a timeout guard.
      */
-    protected final APIResponse<Path> GET$timeout(final String slug,
+    private final APIResponse<Path> GET$timeout(final String slug,
             final PackType packType, final Path downloadTo, final int millis) throws
                     IOException, InterruptedException,
                     SecurityException, TimeoutException {
@@ -60,40 +62,17 @@ public abstract class WebHost {
     /**
      * Downloads a resource pack from this website.
      * 
-     * @param slug The slug for the resource pack. This can be found in its URL.
+     * @param slugInput The slug for the resource pack. This can be found in its URL.
      * @return The downloaded file's path, or {@link Optional#empty()} if the
      *         download failed.
      */
-    public APIResponse<Path> download(final DependencyInfo target)
+    public final APIResponse<Path> download(final DependencyInfo target)
             throws IOException, InterruptedException, SecurityException, TimeoutException {
 
         // Send an http GET request for the best file
-        APIResponse<Path> response = GET$timeout(target.slug(), target.type(), target.packDir(), HTTP_TIMEOUT_MILLIS);
-        for (final String mirror : target.mirrors()) {
+        APIResponse<Path> response = this.GET$timeout(target.downloadSlugs().get(this.hostType()),
+                target.type(), target.packDir(), HTTP_TIMEOUT_MILLIS);
 
-            // Try mirror slugs on failure
-            if (response.statusCode() != 200) {
-                response = GET$timeout(mirror, target.type(), target.packDir(), HTTP_TIMEOUT_MILLIS);
-            } else {
-                break;
-            }
-        }
-
-        // Repzipperd with http implementation BodyHandlers.ofFile()
-        // // Write file on success
-        // if (response.statusCode() == 200) {
-            
-        //     // Ensure parent directories exist
-        //     final Path parent = target.packDir().getParent();
-        //     if (parent != null) {
-        //         Files.createDirectories(parent);
-        //     }
-
-        //     // Write the file to disk
-        //     Files.write(target.packDir(), response.body(),
-        //             StandardOpenOption.CREATE,
-        //             StandardOpenOption.TRUNCATE_EXISTING);
-        // }
         return response;
     }
 }

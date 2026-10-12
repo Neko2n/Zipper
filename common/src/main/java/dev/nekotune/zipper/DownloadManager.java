@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import dev.nekotune.zipper.core.Event;
 import dev.nekotune.zipper.definition.DependencyInfo;
@@ -71,7 +72,7 @@ public final class DownloadManager {
      *         in the running session, false otherwise.
      */
     public static boolean wasDownloaded(final DependencyInfo target) {
-        return DOWNLOADED.containsKey(target.slug());
+        return DOWNLOADED.containsKey(target.fileName());
     }
 
     /**
@@ -107,7 +108,7 @@ public final class DownloadManager {
             super(DependencyInfo.Host.values().length);
             for (final DependencyInfo.Host host : DependencyInfo.Host.values()) {
                 map.put(host, new WorkerThread(this,
-                        targets.stream().filter(host::matches).toList()));
+                        targets.stream().filter(host::downloads).toList()));
             }
             total = targets.size();
             remaining = total;
@@ -156,7 +157,7 @@ public final class DownloadManager {
                     result = tryDownload(target);
                     remaining--;
                 } catch (final Exception e) {
-                    DOWNLOAD_ERRORS.put(target.slug(), DownloadResult.EXCEPTION);
+                    DOWNLOAD_ERRORS.put(target.fileName(), DownloadResult.EXCEPTION);
                     remaining--;
                     latch.countDown();
                     Constants.LOG.error("[DownloadManager$WorkerThread] An exception occured", e);
@@ -167,28 +168,28 @@ public final class DownloadManager {
                     case SUCCESS:
                         Constants.LOG.debug("[DownloadManager] [Working Thread " + this.threadId()
                                 + "] Download SUCCESS for target " + target.toString());
-                        DOWNLOADED.put(target.slug(), target);
+                        DOWNLOADED.put(target.fileName(), target);
                         break;
                     case NOT_FOUND:
                         Constants.LOG.warn("[DownloadManager] [Working Thread " + this.threadId()
                                 + "] Download FAILURE; No files found for target " + target.toString()
                                 + "; Report this to the modpack author");
-                        DOWNLOAD_ERRORS.put(target.slug(), result);
+                        DOWNLOAD_ERRORS.put(target.fileName(), result);
                         break;
                     case SECURITY_BLOCKED:
                         Constants.LOG.warn("[DownloadManager] [Working Thread " + this.threadId()
                                 + "] Download FAILURE; Downloads blocked by security permissions; Check your firewall settings");
-                        DOWNLOAD_ERRORS.put(target.slug(), result);
+                        DOWNLOAD_ERRORS.put(target.fileName(), result);
                         break;
                     case TIMED_OUT:
                         Constants.LOG.warn("[DownloadManager] [Working Thread " + this.threadId()
                                 + "] Download FAILURE; Connection timed out");
-                        DOWNLOAD_ERRORS.put(target.slug(), result);
+                        DOWNLOAD_ERRORS.put(target.fileName(), result);
                         break;
                     case EXCEPTION:
                         Constants.LOG.error("[DownloadManager] [Working Thread " + this.threadId()
                                 + "] Download FAILURE; An exception occured");
-                        DOWNLOAD_ERRORS.put(target.slug(), result);
+                        DOWNLOAD_ERRORS.put(target.fileName(), result);
                         break;
                 }
             }
@@ -199,7 +200,10 @@ public final class DownloadManager {
                 throws InterruptedException {
 
             // Attempt to download file from all websites
-            for (final DependencyInfo.Host host : target.hosts()) {
+            final List<DependencyInfo.Host> hosts = Stream.of(DependencyInfo.Host.values())
+                    .filter(host -> host.downloads(target))
+                    .toList();
+            for (final DependencyInfo.Host host : hosts) {
                 final APIResponse<Path> response;
                 try {
                     response = host.get().download(target);
@@ -223,7 +227,7 @@ public final class DownloadManager {
                 if (response.statusCode() == 404) {
                     Constants.LOG.warn(
                             "[DownloadManager$tryDownload] HTTP 404; No files found for dependency "
-                                    + target.slug() + " at host " + host.toString());
+                                    + target.fileName() + " at host " + host.toString());
                     continue;
                 }
             }

@@ -1,29 +1,32 @@
 package dev.nekotune.zipper.client.gui.config.dependencies;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import dev.nekotune.zipper.Resources;
 import dev.nekotune.zipper.client.gui.config.AbstractConfigScreen;
 import dev.nekotune.zipper.client.gui.config.widgets.container.DropdownContainer;
 import dev.nekotune.zipper.client.gui.config.widgets.container.SettingsList;
-import dev.nekotune.zipper.client.gui.config.widgets.input.OrderedListInput;
 import dev.nekotune.zipper.client.gui.config.widgets.input.SelectionInput;
-import dev.nekotune.zipper.client.gui.config.widgets.input.ToggleInput;
 import dev.nekotune.zipper.definition.DependencyInfo;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.ImageWidget;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.layouts.LinearLayout;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratedElementType;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
 
 /**
  * Pop-up screen to edit a dependency.
@@ -65,21 +68,9 @@ public class DependencyEditScreen extends AbstractConfigScreen {
 
     @Override
     protected void populateSettings(final SettingsList.SettingsContent.Builder builder) {
-        final String hostsKey = KEY + ".hosts";
-        final LinearLayout hostsLayout = LinearLayout.horizontal().spacing(4);
-        this.settingsWidgets.hosts.values().forEach(hostsLayout::addChild);
-
         builder.addLabeled(KEY + ".file-name", this.settingsWidgets.fileName());
         builder.addLabeled(KEY + ".mode", this.settingsWidgets.mode());
-        builder.addLabeled(KEY + ".load-priority", this.settingsWidgets.loadPriority());
-        builder.addLabeled(hostsKey, hostsLayout);
-        
-        final boolean isDownloaded = this.settingsWidgets.hosts.values().stream()
-                .anyMatch(toggle -> toggle.getValue());
-        if (isDownloaded) {
-            builder.addLabeled(KEY + ".slug", this.settingsWidgets.slug());
-            builder.addElement(this.settingsWidgets.mirrors().dropdown());
-        }
+        builder.addElement(this.settingsWidgets.hosts().dropdown());
     }
 
     @Override
@@ -91,26 +82,12 @@ public class DependencyEditScreen extends AbstractConfigScreen {
     @Override
     protected void onPressBack() {
         this.backButton.active = false;
-        int loadPriority = 0;
-        try {
-            loadPriority = Integer.valueOf(this.settingsWidgets.loadPriority().getValue());
-        } catch (final NumberFormatException e) {
-        }
-        final Set<DependencyInfo.Host> hosts = new HashSet<>(this.settingsWidgets.hosts().keySet()
-                .stream()
-                .filter(host -> this.settingsWidgets.hosts().get(host).getValue())
-                .toList());
         final var modified = new DependencyInfo(
                 this.editing.type(),
                 this.settingsWidgets.fileName().getValue(),
-                this.settingsWidgets.slug().getValue(),
-                this.settingsWidgets.mirrors().input().getValues().stream()
-                        .filter(str -> !str.isBlank())
-                        .distinct()
-                        .toList(),
-                hosts,
                 this.settingsWidgets.mode().getValue(),
-                loadPriority);
+                this.editing.loadPriority(),
+                this.settingsWidgets.hosts().toMap());
         this.onApply.accept(this.editing, modified);
         this.editing = modified;
     }
@@ -145,21 +122,16 @@ public class DependencyEditScreen extends AbstractConfigScreen {
     /**
      * Widgets which make up the modifiable settings of a dependency.
      * 
-     * @param slug         The string input for the dependency's slug.
-     * @param mirrors      A modifiable list of string inputs for alternate slugs.
-     * @param hosts        Toggles for the host(s) the dependency should try to
-     *                     download from.
-     * @param mode         A selection button for the mode the dependency loads
-     *                     with.
-     * @param loadPriority The integer input for the dependency's load priority.
+     * @param fileName The string input for the dependency's file name.
+     * @param mode     A selection button for the mode the dependency loads
+     *                 with.
+     * @param hosts    String inputs for the host API slug(s) the dependency should
+     *                 try to download from.
      */
     protected static record SettingsWidgets(
             EditBox fileName,
-            EditBox slug,
-            MirrorsWidgets mirrors,
-            EnumMap<DependencyInfo.Host, ToggleInput.IconToggle> hosts,
             SelectionInput<DependencyInfo.Mode> mode,
-            EditBox loadPriority) {
+            HostsSettings hosts) {
 
         /**
          * Creates new SettingsWidgets to load into the given editScreen.
@@ -168,87 +140,24 @@ public class DependencyEditScreen extends AbstractConfigScreen {
          * @return The newly created SettingsWidgets.
          */
         public static SettingsWidgets init(final DependencyEditScreen editScreen) {
+            return new SettingsWidgets(
+                    initFileName(editScreen),
+                    initModeInput(editScreen),
+                    initHostsSettings(editScreen));
+        }
 
-            // File name setting
+        // Input text box for the pack's file name
+        private static EditBox initFileName(final DependencyEditScreen editScreen) {
             final var fileNameEditBox = new EditBox(editScreen.font, Button.DEFAULT_WIDTH,
                     Button.DEFAULT_HEIGHT,
                     Component.literal(editScreen.editing.fileName()));
             fileNameEditBox.setValue(editScreen.editing.fileName());
             fileNameEditBox.setResponder(text -> editScreen.backButton.active = true);
+            return fileNameEditBox;
+        }
 
-            // Hosts setting
-            final EnumMap<DependencyInfo.Host, ToggleInput.IconToggle> hostToggles = new EnumMap<>(
-                    DependencyInfo.Host.class);
-            final String hostsKey = KEY + ".hosts";
-            final LinearLayout hostsLayout = LinearLayout.horizontal();
-            hostsLayout.spacing(4);
-            final String tooltipKey = hostsKey + ".%s.tooltip";
-            for (final DependencyInfo.Host host : DependencyInfo.Host.values()) {
-
-                // Button tooltip
-                final Function<Boolean, Tooltip> tooltip = state -> {
-                    final String hostTooltipKey = tooltipKey.formatted(host.name()
-                            .toLowerCase().replace('_', '-'));
-                    return Tooltip.create(Component.empty()
-                            .append(Component
-                                    .translatableWithFallback(hostTooltipKey,
-                                            host.displayName)
-                                    .setStyle(Style.EMPTY
-                                            .withColor(host.displayColor)))
-                            .append(Component.literal("\n"))
-                            .append(Component.literal(state ? "ENABLED" : "DISABLED")
-                                    .setStyle(Style.EMPTY
-                                            .withBold(true)
-                                            .withColor(state ? ChatFormatting.GREEN
-                                                    : ChatFormatting.RED))));
-                };
-
-                // Icon button toggle input
-                final boolean enabled = editScreen.editing.hosts().contains(host);
-                final Resources.HostIcons hostIcons = Resources.HostIcons.of(host);
-                final var toggleInput = new ToggleInput.IconToggle(hostIcons.buttonOn(),
-                        hostIcons.buttonOff(), enabled);
-                toggleInput.setTooltip(tooltip.apply(enabled));
-                toggleInput.setResponder(newValue -> {
-                    editScreen.backButton.active = true;
-                    toggleInput.setTooltip(tooltip.apply(newValue));
-                    if (editScreen.settingsWidgets != null)
-                            editScreen.refresh();
-                });
-                hostToggles.put(host, toggleInput);
-                hostsLayout.addChild(toggleInput);
-            }
-
-            // Primary slug setting
-            final var slugEditBox = new EditBox(editScreen.font, Button.DEFAULT_WIDTH,
-                    Button.DEFAULT_HEIGHT,
-                    Component.literal(editScreen.editing.slug()));
-            slugEditBox.setValue(editScreen.editing.slug());
-            slugEditBox.setFilter(DependencyInfo.SLUG_VALIDATOR);
-            slugEditBox.setResponder(text -> editScreen.backButton.active = true);
-
-            // Mirror slugs setting
-            final String mirrorsKey = KEY + ".mirrors";
-            final Component mirrorsHeader = Component.translatable(mirrorsKey);
-            final Tooltip mirrorsTooltip = Tooltip.create(
-                    Component.translatable(mirrorsKey + ".tooltip"));
-            final var mirrorsDropdown = new DropdownContainer(0, 0,
-                    editScreen.getInnerWidth() - 8, Button.DEFAULT_HEIGHT,
-                    mirrorsHeader, editScreen.font,
-                    isCollapsed -> editScreen.refresh());
-            mirrorsDropdown.setTooltip(mirrorsTooltip);
-            final var mirrorsList = new OrderedListInput(0, 0,
-                    mirrorsDropdown.getInnerWidth(), editScreen.font,
-                    $ -> {
-                        if (editScreen.settingsWidgets != null)
-                            editScreen.refresh();
-                    });
-            mirrorsList.setValues(editScreen.editing.mirrors());
-            mirrorsList.setResponder(values -> editScreen.backButton.active = true);
-            mirrorsList.setFilter(DependencyInfo.SLUG_VALIDATOR);
-            mirrorsDropdown.addChild(mirrorsList);
-
-            // Mode setting
+        // Selection button for how the pack should be loaded into the game
+        private static SelectionInput<DependencyInfo.Mode> initModeInput(final DependencyEditScreen editScreen) {
             final var modeInput = new SelectionInput<DependencyInfo.Mode>(0, 0,
                     Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT,
                     Set.of(DependencyInfo.Mode.values()), editScreen.editing.mode(),
@@ -259,24 +168,171 @@ public class DependencyEditScreen extends AbstractConfigScreen {
                 final String modeKey = mode.name().toLowerCase().replace('_', '-');
                 modeInput.assignTooltip(mode, Tooltip.create(
                         Component.translatable(KEY + ".mode.tooltip." + modeKey)));
-                modeInput.setTooltip(modeInput.getTooltip()); // Update existing tooltip
+                modeInput.setTooltip(modeInput.getTooltip()); // Update existing Tooltip
             }
 
-            // Load priority setting
-            final var loadPriorityEditBox = new EditBox(editScreen.font, Button.SMALL_WIDTH,
-                    Button.DEFAULT_HEIGHT,
-                    Component.literal(String.valueOf(editScreen.editing.loadPriority())));
-            loadPriorityEditBox.setValue(String.valueOf(editScreen.editing.loadPriority()));
-            loadPriorityEditBox.setFilter(text -> text.isEmpty()
-                    || (text.matches("^\\d+$") && text.length() <= 3));
-            loadPriorityEditBox.setResponder(text -> editScreen.backButton.active = true);
-
-            final var mirrorsWidgets = new MirrorsWidgets(mirrorsDropdown, mirrorsList);
-            return new SettingsWidgets(fileNameEditBox, slugEditBox, mirrorsWidgets, hostToggles, modeInput,
-                    loadPriorityEditBox);
+            return modeInput;
         }
 
-        public static record MirrorsWidgets(DropdownContainer dropdown, OrderedListInput input) {
+        // Input text boxes for the slugs to use for fallback downloading of the pack
+        // from web host APIs
+        private static HostsSettings initHostsSettings(final DependencyEditScreen editScreen) {
+            final String hostsKey = KEY + ".hosts";
+            final Component hostsHeader = Component.translatable(hostsKey);
+            final Tooltip hostsTooltip = Tooltip.create(
+                    Component.translatable(hostsKey + ".tooltip"));
+
+            // Dropdown container which holds the input text boxes for all of the web host APIs
+            final var hostsDropdown = new DropdownContainer(0, 0,
+                    editScreen.getInnerWidth() - 8, Button.DEFAULT_HEIGHT, 4,
+                    hostsHeader, editScreen.font,
+                    isCollapsed -> editScreen.refresh());
+            hostsDropdown.setTooltip(hostsTooltip);
+
+            // Callback for pressing the "?" button next to the slug input boxes
+            final Button.OnPress onPressHelp = $ -> {
+
+            };
+
+            // Build slug input text boxes for each web host API
+            final EnumMap<DependencyInfo.Host, HostsSettings.HostWidget> hostsWidgets = new EnumMap<>(
+                    DependencyInfo.Host.class);
+            for (final DependencyInfo.Host host : DependencyInfo.Host.values()) {
+                final HostsSettings.HostWidget hostWidget = new HostsSettings.HostWidget(
+                        host, 0, 0, hostsDropdown.getInnerWidth(), editScreen.font, onPressHelp);
+                hostWidget.setResponder(values -> editScreen.backButton.active = true);
+                hostWidget.slugInput.setValue(editScreen.editing.downloadSlugs()
+                        .getOrDefault(host, ""));
+                hostsWidgets.put(host, hostWidget);
+                hostsDropdown.addChild(hostWidget);
+            }
+
+            return new HostsSettings(hostsDropdown, hostsWidgets);
+        }
+
+        public static record HostsSettings(DropdownContainer dropdown,
+                EnumMap<DependencyInfo.Host, HostWidget> widgets) {
+
+            public EnumMap<DependencyInfo.Host, String> toMap() {
+                final EnumMap<DependencyInfo.Host, String> map = new EnumMap<>(DependencyInfo.Host.class);
+                for (final DependencyInfo.Host host : DependencyInfo.Host.values()) {
+                    final HostWidget widget = this.widgets.get(host);
+                    map.put(host, widget.slugInput.getValue());
+                }
+                return map;
+            }
+
+            public static class HostWidget extends AbstractContainerWidget {
+
+                public final DependencyInfo.Host host;
+                public final EditBox slugInput;
+                public final Button helpButton;
+                protected ImageWidget hostIcon;
+                private Consumer<String> responder = $ -> {
+                };
+
+                private final List<GuiEventListener> children = new ArrayList<>();
+
+                public HostWidget(final DependencyInfo.Host host, final int x, final int y, final int width,
+                        final Font font, final Button.OnPress onPressHelp) {
+                    super(x, y, width, Button.DEFAULT_HEIGHT, Component.empty());
+                    this.host = host;
+
+                    // Input box for the slug to download from
+                    this.slugInput = new EditBox(font, 0, Button.DEFAULT_HEIGHT, Component.literal("project-slug"));
+                    this.slugInput.setFilter(DependencyInfo.SLUG_VALIDATOR);
+                    this.slugInput.setResponder(value -> {
+                        this.responder.accept(value);
+                        this.refresh();
+                    });
+                    this.children.add(this.slugInput);
+
+                    // Logo of the host website
+                    final Resources.Sprite logo = this.getHostIcon();
+                    this.setHostIcon(logo);
+                    this.children.add(this.hostIcon);
+                    
+                    // Button that shows information about download hosts and where to find slugs
+                    this.helpButton = Button.builder(Component.literal("?"), onPressHelp)
+                            .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
+                            .build();
+                    this.children.add(this.helpButton);
+
+                    this.refresh();
+                }
+
+                public void setResponder(final Consumer<String> responder) {
+                    this.responder = responder;
+                }
+
+                private void setHostIcon(final Resources.Sprite logo) {
+                    this.children.remove(this.hostIcon);
+                    this.hostIcon = ImageWidget.sprite(logo.width(), logo.height(), logo.location());
+                    final Tooltip hostTooltip = Tooltip.create(Component.literal(host.displayName));
+                    this.hostIcon.setTooltip(hostTooltip);
+                    this.children.add(this.hostIcon);
+                }
+
+                protected Resources.Sprite getHostIcon() {
+                    final Resources.HostIcons icons = Resources.HostIcons.of(this.host);
+                    final boolean isEnabled = !this.slugInput.getValue().isBlank();
+                    return isEnabled ? icons.buttonOn() : icons.buttonOff();
+                }
+
+                protected void refresh() {
+                    final Resources.Sprite logo = this.getHostIcon();
+                    this.setHostIcon(logo);
+                    this.hostIcon.setPosition(this.getX(), this.getY());
+                    final int slugMargin = logo.width() + 4;
+                    final int slugX = this.getX() + slugMargin;
+                    this.slugInput.setPosition(slugX, this.getY());
+                    final int slugWidth = this.getWidth() - slugMargin - Button.DEFAULT_HEIGHT - 4;
+                    this.slugInput.setWidth(slugWidth);
+                    this.helpButton.setPosition(slugX + slugWidth + 4, this.getY());
+                }
+
+                @Override
+                public void setHeight(final int height) {
+                    super.setHeight(height);
+                    this.refresh();
+                }
+
+                @Override
+                public void setWidth(final int width) {
+                    super.setWidth(width);
+                    this.refresh();
+                }
+
+                @Override
+                public void setX(final int x) {
+                    super.setX(x);
+                    this.refresh();
+                }
+
+                @Override
+                public void setY(final int y) {
+                    super.setY(y);
+                    this.refresh();
+                }
+
+                @Override
+                public List<? extends GuiEventListener> children() {
+                    return this.children;
+                }
+
+                @Override
+                protected void renderWidget(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+                        final float partialTick) {
+                    this.hostIcon.render(guiGraphics, mouseX, mouseY, partialTick);
+                    this.slugInput.render(guiGraphics, mouseX, mouseY, partialTick);
+                    this.helpButton.render(guiGraphics, mouseX, mouseY, partialTick);
+                }
+
+                @Override
+                protected void updateWidgetNarration(final NarrationElementOutput narrationElementOutput) {
+                    narrationElementOutput.add(NarratedElementType.TITLE, this.getMessage());
+                }
+            }
         }
     }
 

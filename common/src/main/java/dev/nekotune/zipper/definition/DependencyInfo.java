@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -19,7 +18,7 @@ import net.minecraft.server.packs.PackType;
 /**
  * Information about a downloaded dependency.
  * 
- * @param slug         The slug to search up and download from.
+ * @param slugInput         The slug to search up and download from.
  * @param mirrors      Mirror slugs for if the initial slug failed to find a
  *                     match.
  * @param hosts        The website host(s) to attempt to download from.
@@ -32,11 +31,9 @@ import net.minecraft.server.packs.PackType;
 public record DependencyInfo(
         PackType type,
         String fileName,
-        String slug,
-        List<String> mirrors,
-        Set<DependencyInfo.Host> hosts,
         Mode mode,
-        int loadPriority) {
+        int loadPriority,
+        EnumMap<DependencyInfo.Host, String> downloadSlugs) {
 
     /**
      * Validates a given slug string.
@@ -52,18 +49,13 @@ public record DependencyInfo(
      * @return The default construction of a DependencyInfo object.
      */
     public static final DependencyInfo createDefault(final PackType packType) {
-        return new DependencyInfo(packType, "New Dependency", "new-dependency", List.of(),
-                Set.of(DependencyInfo.Host.MODRINTH),
-                DependencyInfo.Mode.OPTIONAL_ENABLED, 0);
+        return new DependencyInfo(packType, "New Dependency", DependencyInfo.Mode.OPTIONAL_ENABLED,
+                0, new EnumMap<>(DependencyInfo.Host.class));
     }
 
     public DependencyInfo {
-        mirrors = mirrors != null ? mirrors : List.of();
-        hosts = hosts != null ? hosts : Set.of();
         mode = mode != null ? mode : Mode.OPTIONAL_DISABLED;
-        if (slug == null && mirrors.size() > 0) {
-            slug = mirrors.removeFirst();
-        }
+        downloadSlugs = downloadSlugs != null ? downloadSlugs : new EnumMap<>(DependencyInfo.Host.class);
     }
 
     private static final Map<PackType, Path> folder$CACHE = new EnumMap<>(PackType.class);
@@ -93,11 +85,10 @@ public record DependencyInfo(
 
     @Override
     public String toString() {
-        return "{slug: " + slug
-                + ", mirror: " + mirrors.toString()
-                + ", host: " + hosts.toString()
-                + ", mode: " + mode.toString()
+        return "{fileName: " + fileName
                 + ", type: " + type.toString()
+                + ", mode: " + mode.toString()
+                + ", downloadSlugs: " + downloadSlugs.toString()
                 + "}";
     }
 
@@ -155,8 +146,8 @@ public record DependencyInfo(
             this.displayName = displayName.strip();
         }
 
-        public boolean matches(final DependencyInfo target) {
-            return target.hosts().contains(this);
+        public boolean downloads(final DependencyInfo target) {
+            return !target.downloadSlugs().getOrDefault(this, "").isBlank();
         }
 
         @Override

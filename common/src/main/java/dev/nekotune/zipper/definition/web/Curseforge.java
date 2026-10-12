@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.definition.DependencyInfo;
+import dev.nekotune.zipper.definition.DependencyInfo.Host;
 import dev.nekotune.zipper.definition.web.api.CurseforgeAPI.*;
 import dev.nekotune.zipper.definition.web.api.WebAPI.APIResponse;
 import net.minecraft.server.packs.PackType;
@@ -11,6 +13,11 @@ import net.minecraft.server.packs.PackType;
 public class Curseforge extends WebHost {
 
     public static final Curseforge INSTANCE = new Curseforge();
+
+    @Override
+    protected Host hostType() {
+        return DependencyInfo.Host.CURSEFORGE;
+    }
 
     @Override
     public APIResponse<Path> GET(final String slug, final PackType packType, final Path downloadTo)

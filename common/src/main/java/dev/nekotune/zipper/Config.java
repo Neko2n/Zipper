@@ -6,11 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.gson.Gson;
@@ -125,18 +123,22 @@ public final class Config {
         List<DependencyInfo> dependencies = config.dependencies.keySet().stream()
                 .filter((final String fileName) -> {
                     final DependencyInfo dependency = config.dependencies.get(fileName);
-                    if (dependency.type() == null || dependency.slug() == null) {
+                    if (dependency.type() == null || dependency.fileName() == null) {
                         return false;
                     }
-                    final Set<String> slugs = new HashSet<>(dependency.mirrors());
-                    slugs.add(dependency.slug());
-                    for (final String slug : slugs) {
+                    boolean isWebDependency = false;
+                    for (final String slug : dependency.downloadSlugs().values()) {
+                        if (!slug.isEmpty()) {
+                            isWebDependency = true;
+                        } else {
+                            continue;
+                        }
                         if (DependencyInfo.SLUG_VALIDATOR.test(slug))
                             continue;
                         Constants.LOG.warn("[Config] Invalid slug \"" + slug + "\"; removing entry");
                         return false;
                     }
-                    if (!dependency.hosts().isEmpty()) {
+                    if (isWebDependency) {
                         webDependencies.getAndIncrement();
                     }
                     return true;
