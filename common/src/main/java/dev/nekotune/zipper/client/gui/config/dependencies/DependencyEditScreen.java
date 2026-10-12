@@ -93,6 +93,14 @@ public class DependencyEditScreen extends AbstractConfigScreen {
         this.editing = modified;
     }
 
+    @Override
+    public void render(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+            final float partialTick) {
+        this.lastScreen.width = this.width;
+        this.lastScreen.height = this.height;
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
     // Render the subtitle along with the main title
     @Override
     public void renderTitle(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,

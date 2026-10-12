@@ -7,7 +7,6 @@ import net.minecraft.client.gui.components.SpriteIconButton;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-// TODO fix margins being inaccurate
 /**
  * Temporary screen with modifiable dimensions and a close button.
  */
@@ -83,12 +82,20 @@ public abstract class AbstractPopupScreen extends Screen {
     }
 
     @Override
+    public void render(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+            final float partialTick) {
+        this.screenBelow.width = this.width;
+        this.screenBelow.height = this.height;
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
+    @Override
     public void renderBackground(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
             final float partialTick) {
         super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderScreenBelow(guiGraphics, mouseX, mouseY, partialTick);
         guiGraphics.fill(this.marginX(), this.marginY(),
-                this.getPopupWidth(), this.getPopupHeight(),
+                this.marginX() + this.getPopupWidth(), this.marginY() + this.getPopupHeight(),
                 this.bgColor());
         this.renderOutline(guiGraphics, mouseX, mouseY, partialTick);
     }

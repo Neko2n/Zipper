@@ -158,6 +158,10 @@ public class DropdownContainer extends AbstractContainerWidget {
         return this.getWidth() - this.contentMargin;
     }
 
+    public boolean isPointInHeader(final double x, final double y) {
+        return x >= this.getX() && y >= this.getY() && x < this.getX() + this.getWidth() && y < this.getY() + this.getHeaderHeight();
+    }
+
     /**
      * Renders the inner contents contained within this dropdown.
      */
@@ -203,7 +207,7 @@ public class DropdownContainer extends AbstractContainerWidget {
         // Render header
         final int centerY = this.getY() + this.getHeaderHeight() / 2;
         final Resources.Sprite arrowSprite = Resources.Gui.Sprites.Icons.Dropdown.get(
-                !this.isCollapsed(), this.isHovered());
+                !this.isCollapsed(), this.isPointInHeader(mouseX, mouseY));
         guiGraphics.blitSprite(arrowSprite.location(),
                 this.getX(), centerY - arrowSprite.height() / 2,
                 arrowSprite.width(), arrowSprite.height());
@@ -220,10 +224,7 @@ public class DropdownContainer extends AbstractContainerWidget {
     // Restrict onClick fire requirements to be clicking the header.
     @Override
     protected boolean clicked(final double mouseX, final double mouseY) {
-        if (mouseY > this.getY() + this.getHeaderHeight()) {
-            return false;
-        }
-        return super.clicked(mouseX, mouseY);
+        return this.isPointInHeader(mouseX, mouseY) ? super.clicked(mouseX, mouseY) : false;
     }
 
     // Toggle collapsed state when clicked.

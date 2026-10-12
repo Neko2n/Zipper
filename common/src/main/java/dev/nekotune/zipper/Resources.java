@@ -13,6 +13,7 @@ public class Resources {
     					Constants.MOD_ID, "icon/edit"), 20, 20);
     			public static final Sprite DELETE = new Sprite(ResourceLocation.fromNamespaceAndPath(
     					Constants.MOD_ID, "icon/delete"), 20, 20);
+                // TODO make asset for close icon
     			public static final Sprite CLOSE = new Sprite(ResourceLocation.fromNamespaceAndPath(
     					Constants.MOD_ID, "icon/close"), 20, 20);
                 public static interface Dropdown {
@@ -21,9 +22,9 @@ public class Resources {
                     public static final Sprite CLOSED = new Sprite(ResourceLocation.fromNamespaceAndPath(
                             Constants.MOD_ID, "icon/arrow_closed"), 20, 20);
                     public static final Sprite OPEN_HOVERED = new Sprite(ResourceLocation.fromNamespaceAndPath(
-                            Constants.MOD_ID, "icon/arrow_open"), 20, 20);
+                            Constants.MOD_ID, "icon/arrow_open_hovered"), 20, 20);
                     public static final Sprite CLOSED_HOVERED = new Sprite(ResourceLocation.fromNamespaceAndPath(
-                            Constants.MOD_ID, "icon/arrow_closed"), 20, 20);
+                            Constants.MOD_ID, "icon/arrow_closed_hovered"), 20, 20);
                     public static Sprite get(final boolean open, final boolean hovered) {
                         return open ?
                             (hovered ? OPEN_HOVERED : OPEN) :
