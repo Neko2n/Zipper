@@ -19,23 +19,23 @@ public abstract class AbstractPopupScreen extends Screen {
     protected AbstractPopupScreen(final Screen covering, final int width, final int height, final Component title) {
         super(title);
         this.screenBelow = covering;
-        this.popupWidth = width;
-        this.popupHeight = height;
+        this.popupWidth = 0;
+        this.popupHeight = 0;
 
         final Resources.Sprite closeIcon = Resources.Gui.Sprites.Icons.CLOSE;
-        final Button.OnPress onPressClose = $ -> {
-            this.onClose();
-        };
+        final Button.OnPress onPressClose = $ -> this.onClose();
         this.closeButton = SpriteIconButton.builder(Component.literal("close"), onPressClose, true)
                 .size(closeIcon.width(), closeIcon.height())
                 .sprite(closeIcon.location(), closeIcon.width(), closeIcon.height())
                 .build();
-        this.updateCloseButtonPosition();
+        
+        this.setPopupWidth(width);
+        this.setPopupHeight(height);
     }
 
     private void updateCloseButtonPosition() {
         final int x = (this.marginX() + this.getPopupWidth()) - this.closeButton.getWidth();
-        final int y = this.marginY() - this.closeButton.getHeight();
+        final int y = this.marginY();
         this.closeButton.setPosition(x, y);
     }
 
@@ -76,6 +76,7 @@ public abstract class AbstractPopupScreen extends Screen {
     @Override 
     public void init() {
         super.init();
+        this.updateCloseButtonPosition();
         if (this.showCloseButton()) {
             this.addRenderableWidget(this.closeButton);
         }
