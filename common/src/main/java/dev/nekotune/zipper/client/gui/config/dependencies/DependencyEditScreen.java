@@ -356,11 +356,45 @@ public class DependencyEditScreen extends AbstractConfigScreen {
         public final DependencyInfo.Host host;
 
         protected HelpButtonPopupScreen(final DependencyEditScreen covering, final DependencyInfo.Host host) {
-            super(covering, 200, 100, Component.empty());
+            super(covering, 400, 100, Component.empty());
             this.host = host;
         }
 
-        // TODO render help images for each host
+        @Override
+        public void renderContent(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+                final float partialTick) {
+            final int centerX = this.marginX() + (this.getPopupWidth() / 2);
+            final int centerY = this.marginY() + (this.getPopupHeight() / 2);
+            final int textColor = 0xFFFFFFFF;
+            final int padding = 20;
+
+            // Localized explanation text
+            final Component explanation = Component.translatable(KEY + ".popup.download-help");
+            guiGraphics.drawCenteredString(this.font, explanation, centerX, centerY - (padding / 2), textColor);
+
+            // URL example for where to find project slugs
+            final Resources.Sprite searchSprite = Resources.Gui.Sprites.Icons.SEARCH;
+            final MutableComponent urlExample = Component.empty();
+            switch (this.host) {
+                case CURSEFORGE:
+                    urlExample.append(Component.literal("https://www.curseforge.com/minecraft/texture-packs/")
+                            .withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY));
+                    break;
+                case MODRINTH:
+                    urlExample.append(Component.literal("https://modrinth.com/resourcepack/")
+                            .withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY));
+                    break;
+            }
+            urlExample.append(Component.literal("project-slug")
+                    .withStyle(ChatFormatting.BOLD, ChatFormatting.YELLOW));
+            final int urlExampleX = centerX + (searchSprite.width() / 2) + 3;
+            final int urlExampleY = centerY + (padding / 2);
+            guiGraphics.drawCenteredString(this.font, urlExample, urlExampleX, urlExampleY, textColor);
+            final int textWidth = this.font.width(urlExample);
+            guiGraphics.blitSprite(searchSprite.location(),
+                    urlExampleX - (textWidth / 2) - 6 - searchSprite.width(), urlExampleY - (searchSprite.height() / 4),
+                    searchSprite.width(), searchSprite.height());
+        }
     }
 
     @FunctionalInterface

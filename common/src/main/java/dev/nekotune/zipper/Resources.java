@@ -15,6 +15,8 @@ public class Resources {
     					Constants.MOD_ID, "icon/delete"), 20, 20);
     			public static final Sprite CLOSE = new Sprite(ResourceLocation.fromNamespaceAndPath(
     					Constants.MOD_ID, "icon/close"), 14, 14);
+    			public static final Sprite SEARCH = new Sprite(ResourceLocation.fromNamespaceAndPath(
+    					Constants.MOD_ID, "icon/search"), 12, 12);
                 public static interface Dropdown {
                     public static final Sprite OPEN = new Sprite(ResourceLocation.fromNamespaceAndPath(
                             Constants.MOD_ID, "icon/arrow_open"), 20, 20);

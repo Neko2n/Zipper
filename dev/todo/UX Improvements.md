@@ -1,9 +1,4 @@
 
-## 0. One slug per host
-
-Rather than toggling hosts and sharing slugs between them, have a single edit box per-host which permits a slug. These edit boxes will be contained within a dropdown.
-
-
 ## 1. Pack selection screen
 
 Change DependenciesScreen to a one-column pack list.

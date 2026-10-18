@@ -16,7 +16,8 @@ import net.minecraft.network.chat.Component;
 public abstract class AbstractConfigScreen extends Screen {
 
     public static final String KEY = Resources.Lang.Gui.Screen.KEY + ".config";
-    protected static final int SCROLL_LIST_PADDING = 80;
+    protected static final int MIN_INNER_PADDING = 80;
+    protected static final int MAX_INNER_WIDTH = 400;
     private static final int BAR_BG_COLOR = 0x65000000;
 
     private final SettingsList settingsList;
@@ -50,7 +51,7 @@ public abstract class AbstractConfigScreen extends Screen {
      */
     private final void rebuildSettings() {
         final int listWidth = this.getInnerWidth();
-        this.settingsList.setPosition(SCROLL_LIST_PADDING, this.barHeight());
+        this.settingsList.setPosition(this.getInnerPadding(), this.barHeight());
         this.settingsList.setWidth(listWidth);
         this.settingsList.setHeight(this.height - this.barHeight() * 2);
         final int listContentWidth = listWidth - this.settingsList.totalInnerPadding();
@@ -129,7 +130,14 @@ public abstract class AbstractConfigScreen extends Screen {
      * @return The width of the inner scroll list.
      */
     protected int getInnerWidth() {
-        return this.width - SCROLL_LIST_PADDING * 2;
+        return Math.min(this.width - MIN_INNER_PADDING * 2, MAX_INNER_WIDTH);
+    }
+
+    /**
+     * @return The number of pixels between the left side of the screen and the left side of the scroll list.
+     */
+    protected final int getInnerPadding() {
+        return (this.width - this.getInnerWidth()) / 2;
     }
 
     /**

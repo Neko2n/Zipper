@@ -36,6 +36,7 @@
     "zipper.gui.screen.config.dependencies.edit.mode.tooltip.optional-disabled": "The pack is disabled by default, but can be enabled.",
     "zipper.gui.screen.config.dependencies.edit.mode.tooltip.support": "The pack is not loaded, only downloaded to support the authors.",
     "zipper.gui.screen.config.dependencies.edit.button.back": "Apply",
+    "zipper.gui.screen.config.dependencies.edit.popup.download-help": "Use a project's slug to download it from a given host website.",
 
     "zipper.gui.screen.reloadprompt.title": "Modpack Resources Downloaded",
     "zipper.gui.screen.reloadprompt.message.1": "New resources have been downloaded.",

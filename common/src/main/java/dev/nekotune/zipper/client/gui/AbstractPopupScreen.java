@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 /**
  * Temporary screen with modifiable dimensions and a close button.
  */
-public abstract class AbstractPopupScreen extends Screen {
+public abstract class  AbstractPopupScreen extends Screen {
     public final Screen screenBelow;
     protected final Button closeButton;
     protected int popupWidth;
@@ -83,15 +83,16 @@ public abstract class AbstractPopupScreen extends Screen {
     }
 
     @Override
-    public void render(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+    public final void render(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
             final float partialTick) {
         this.screenBelow.width = this.width;
         this.screenBelow.height = this.height;
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderContent(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
-    public void renderBackground(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+    public final void renderBackground(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
             final float partialTick) {
         super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderScreenBelow(guiGraphics, mouseX, mouseY, partialTick);
@@ -114,6 +115,9 @@ public abstract class AbstractPopupScreen extends Screen {
         guiGraphics.renderOutline(this.marginX(), this.marginY(),
                 this.getPopupWidth(), this.getPopupHeight(), 0xFFFFFFFF);
     }
+
+    public abstract void renderContent(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+            final float partialTick);
 
     @Override
     public boolean shouldCloseOnEsc() {
