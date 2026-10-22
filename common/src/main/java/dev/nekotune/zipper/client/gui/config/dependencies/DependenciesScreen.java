@@ -11,7 +11,7 @@ import java.util.Map;
 import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.Resources;
 import dev.nekotune.zipper.client.gui.config.AbstractConfigScreen;
-import dev.nekotune.zipper.client.gui.config.widgets.container.SettingsList;
+import dev.nekotune.zipper.client.gui.widgets.container.SettingsList;
 import dev.nekotune.zipper.definition.DependencyInfo;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
@@ -30,9 +30,10 @@ import net.minecraft.server.packs.PackType;
  * {@link DependencyEditScreen}.
  * Dependencies in the list may be removed with a button.
  * New dependencies may be added to the list with a button.
+ * Dependencies may be re-ordered with arrow buttons.
  */
 public class DependenciesScreen extends AbstractConfigScreen {
-
+    
     protected static final String KEY = AbstractConfigScreen.KEY + ".dependencies";
 
     private static final Map<PackType, Component> TITLES = new EnumMap<>(Map.of(
@@ -100,15 +101,6 @@ public class DependenciesScreen extends AbstractConfigScreen {
             int titleInfoWidth = this.getInnerWidth() - 4;
             final var titleInfo = new StringWidget(Component.literal(dependency.fileName()), font);
             infoWidgets.add(titleInfo);
-
-            // Display the dependency's active hosts as badges next to the title
-            // for (final DependencyInfo.Host host : dependency.hosts()) {
-            // infoWidgets.add(SpacerElement.width(4));
-            // final Resources.Sprite logoIcon = Resources.HostIcons.of(host).logo();
-            // infoWidgets.add(ImageWidget.sprite(
-            // logoIcon.width(), logoIcon.height(), logoIcon.location()));
-            // titleInfoWidth -= logoIcon.width() + 4;
-            // }
 
             // Button which modifies the dependency's information
             final Resources.Sprite editIcon = Resources.Gui.Sprites.Icons.EDIT;

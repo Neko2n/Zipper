@@ -2,7 +2,7 @@ package dev.nekotune.zipper.client.gui.config;
 
 import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.Resources;
-import dev.nekotune.zipper.client.gui.config.widgets.container.SettingsList;
+import dev.nekotune.zipper.client.gui.widgets.container.SettingsList;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;

@@ -1,4 +1,4 @@
-package dev.nekotune.zipper.client.gui.config.widgets.input;
+package dev.nekotune.zipper.client.gui.widgets.input;
 
 import java.util.function.Consumer;
 

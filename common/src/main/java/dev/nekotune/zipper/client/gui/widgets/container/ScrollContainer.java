@@ -1,4 +1,4 @@
-package dev.nekotune.zipper.client.gui.config.widgets.container;
+package dev.nekotune.zipper.client.gui.widgets.container;
 
 import java.util.ArrayList;
 import java.util.List;

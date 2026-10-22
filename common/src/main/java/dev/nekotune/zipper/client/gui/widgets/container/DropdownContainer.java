@@ -1,4 +1,4 @@
-package dev.nekotune.zipper.client.gui.config.widgets.container;
+package dev.nekotune.zipper.client.gui.widgets.container;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import dev.nekotune.zipper.Constants;
 import dev.nekotune.zipper.Resources;
+import dev.nekotune.zipper.Resources.Gui.Sprites.Widgets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -206,7 +207,7 @@ public class DropdownContainer extends AbstractContainerWidget {
 
         // Render header
         final int centerY = this.getY() + this.getHeaderHeight() / 2;
-        final Resources.Sprite arrowSprite = Resources.Gui.Sprites.Icons.Dropdown.get(
+        final Resources.Sprite arrowSprite = Widgets.Dropdown.get(
                 !this.isCollapsed(), this.isPointInHeader(mouseX, mouseY));
         guiGraphics.blitSprite(arrowSprite.location(),
                 this.getX(), centerY - arrowSprite.height() / 2,
