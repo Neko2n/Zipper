@@ -5,8 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,10 +36,7 @@ public final class Config {
     public boolean production = false;
 
     @Since(1.0)
-    public HashSet<DependencyInfo> dependencies = new HashSet<>();
-
-    @Since(1.0)
-    public LinkedList<String> loadOrder = new LinkedList<>();
+    public LinkedHashSet<DependencyInfo> dependencies = new LinkedHashSet<>();
 
     @Since(1.0)
     public boolean hideForced = true;
@@ -74,10 +70,17 @@ public final class Config {
     }
 
     /**
-     * Returns the order number in which the given pack loads.
+     * @return The order number in which the given pack loads.
+     * Returns -1 if the given pack is not in the config.
      */
     public int getLoadOrder(final DependencyInfo info) {
-        return this.loadOrder.indexOf(info.fileName());
+        int pos = 0;
+        for (final DependencyInfo dependency : this.dependencies) {
+            if (dependency == info)
+                return pos;
+            pos++;
+        }
+        return -1;
     }
 
     /**
@@ -163,18 +166,7 @@ public final class Config {
         if (webDependencies.get() > 100) {
             throw new IllegalStateException("Too many web dependencies. For user safety, downloads are capped at 100.");
         }
-        config.dependencies = new HashSet<>(dependencies);
-
-        // Remove duplicates from the loadOrder list
-        config.loadOrder = new LinkedList<String>(config.loadOrder.stream().distinct().toList());
-
-        // Ensure all dependencies are listed in the loadOrder list
-        config.dependencies.forEach(info -> {
-            if (!config.loadOrder.contains(info.fileName())) {
-                Zipper.LOG.warn("Pack \"" + info.fileName() + "\" missing from loadOrder config; adding");
-                config.loadOrder.add(info.fileName());
-            }
-        });
+        config.dependencies = new LinkedHashSet<>(dependencies);
 
         config.save();
     }

@@ -1,13 +1,15 @@
 package dev.nekotune.zipper.client.gui.config.dependencies;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+
 import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.Resources;
 import dev.nekotune.zipper.client.gui.config.AbstractConfigScreen;
@@ -53,14 +55,14 @@ public class DependenciesScreen extends AbstractConfigScreen {
                     .translatableWithFallback(KEY + "server-data", "Data Packs")
                     .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
 
-    private final HashSet<DependencyPack> originals;
-    private final HashSet<DependencyPack> modifying;
+    private final LinkedHashSet<DependencyPack> originalPacks;
+    private final LinkedHashSet<DependencyPack> modifiedPacks;
     private final PackType packType;
     protected final Button createPackButton;
 
     public DependenciesScreen(final Screen lastScreen, final PackType packType) {
         super(TITLES.get(packType), lastScreen);
-        this.originals = new HashSet<DependencyPack>(Config.INSTANCE.dependencies.stream()
+        this.originalPacks = new LinkedHashSet<DependencyPack>(Config.INSTANCE.dependencies.stream()
                 .filter(d -> d.type() == packType)
                 .map(d -> {
                     try {
@@ -70,7 +72,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
                     }
                 })
                 .toList());
-        this.modifying = new HashSet<>(this.originals);
+        this.modifiedPacks = new LinkedHashSet<>(this.originalPacks);
         this.packType = packType;
         this.createPackButton = Button.builder(
                 Component.literal("+").withStyle(ChatFormatting.BOLD),
@@ -83,16 +85,10 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
     /**
      * Injects all modified dependencies into the configuration.
-     * 
-     * @param modified Ordered list of modified dependencies.
      */
-    protected void apply(final HashSet<DependencyPack> modified) {
-        this.originals.forEach(pack -> {
-            Config.INSTANCE.dependencies.remove(pack.info);
-        });
-        modified.forEach((final DependencyPack p) -> {
-            Config.INSTANCE.dependencies.add(p.info);
-        });
+    protected void apply() {
+        Config.INSTANCE.dependencies.removeAll(this.originalPacks.stream().map(p -> p.info).toList());
+        Config.INSTANCE.dependencies.addAll(this.modifiedPacks.stream().map(p -> p.info).toList());
     }
 
     /**
@@ -103,14 +99,29 @@ public class DependenciesScreen extends AbstractConfigScreen {
     private final void editDependency(final DependencyPack dependency) {
         final DependencyEditScreen.OnApply injectModified = (final DependencyPack original,
                 final DependencyPack modified) -> {
-            this.modifying.remove(original);
-            this.modifying.add(modified);
+            final var backup = new LinkedHashSet<>(this.modifiedPacks);
+            this.modifiedPacks.clear();
+            for (final DependencyPack pack : backup) {
+                if (pack == original) {
+                    this.modifiedPacks.add(modified);
+                } else {
+                    this.modifiedPacks.add(pack);
+                }
+            }
+            if (!this.modifiedPacks.contains(modified)) {
+                this.modifiedPacks.addFirst(modified);
+            }
             this.refresh();
         };
-        this.minecraft.setScreen(new DependencyEditScreen(this, dependency, injectModified));
+        final HashSet<String> takenFileNames = new HashSet<>(this.modifiedPacks.stream()
+                .map(p -> p.info.fileName())
+                .filter(s -> s != dependency.info.fileName())
+                .toList());
+        takenFileNames.add(DependencyInfo.createDefault(packType).fileName());
+        this.minecraft.setScreen(new DependencyEditScreen(this, dependency, injectModified, takenFileNames));
     }
 
-    @Override 
+    @Override
     protected void init() {
         super.init();
         final int x = this.getInnerMargin() + this.getInnerWidth() + SettingsList.SCROLL_BAR_WIDTH + 4;
@@ -128,15 +139,13 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
     @Override
     protected void populateSettings(final SettingsList.SettingsContent.Builder builder) {
-        final var sorted = this.modifying.stream()
-                .sorted(Comparator.comparingInt((final DependencyPack p) -> Config.INSTANCE.getLoadOrder(p.info)))
-                .toList();
+        final LinkedList<DependencyPack> indexable = new LinkedList<>(this.modifiedPacks);
         Optional<Entry> above = Optional.empty();
         Optional<Entry> below = Optional.empty();
-        for (int i = 0; i < sorted.size(); i++) {
-            final Entry entry = below.orElse(new Entry(this, sorted.get(i)));
-            if (i + 1 < sorted.size()) {
-                final DependencyPack nextPack = sorted.get(i + 1);
+        for (int i = 0; i < indexable.size(); i++) {
+            final Entry entry = below.orElse(new Entry(this, indexable.get(i)));
+            if (i + 1 < indexable.size()) {
+                final DependencyPack nextPack = indexable.get(i + 1);
                 below = Optional.of(new Entry(this, nextPack));
                 entry.below = below;
             }
@@ -148,7 +157,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
     @Override
     public void onClose() {
-        this.apply(this.modifying);
+        this.apply();
         super.onClose();
     }
 
@@ -208,7 +217,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
                         // On click, re-build the scroll list with this dependency removed.
                         // TODO show confirmation pop-up
-                        this.screen.modifying.remove(pack);
+                        this.screen.modifiedPacks.remove(pack);
                         this.screen.refresh();
                     },
                     true)
@@ -267,23 +276,18 @@ public class DependenciesScreen extends AbstractConfigScreen {
          * @param swapWith The entry to swap loading priorities (positions) with.
          */
         public void swapWith(final Entry swapWith) {
-            final int thisPos = Config.INSTANCE.getLoadOrder(this.pack.info);
-            final int swapPos = Config.INSTANCE.getLoadOrder(swapWith.pack.info);
-            Config.INSTANCE.loadOrder.remove(swapPos);
-            Config.INSTANCE.loadOrder.add(swapPos, this.pack.info.fileName());
-            Config.INSTANCE.loadOrder.remove(thisPos);
-            Config.INSTANCE.loadOrder.add(thisPos, swapWith.pack.info.fileName());
-            this.screen.refresh();
-        }
-
-        public boolean canMove() {
-            switch (this.pack.info.mode()) {
-                case FORCED:
-                case OPTIONAL_ENABLED:
-                    return true;
-                default:
+            final var backup = new LinkedHashSet<>(this.screen.modifiedPacks);
+            this.screen.modifiedPacks.clear();
+            for (final DependencyPack existing : backup) {
+                if (existing == this.pack) {
+                    this.screen.modifiedPacks.add(swapWith.pack);
+                } else if (existing == swapWith.pack) {
+                    this.screen.modifiedPacks.add(this.pack);
+                } else {
+                    this.screen.modifiedPacks.add(existing);
+                }
             }
-            return false;
+            this.screen.refresh();
         }
 
         @Override
@@ -306,7 +310,8 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
         @Override
         public List<? extends GuiEventListener> children() {
-            final List<AbstractWidget> widgets = new LinkedList<>(List.of(this.editButton, this.deleteButton, packWidget));
+            final List<AbstractWidget> widgets = new LinkedList<>(
+                    List.of(this.editButton, this.deleteButton, packWidget));
             if (this.above.isPresent()) {
                 widgets.addFirst(this.priorityButtons.up());
             }

@@ -35,8 +35,11 @@ public abstract class PackSelectionModelMixin {
 
         // Hide built-in packs depending on configuration settings
         if ((pack.getPackSource() == PackSource.BUILT_IN || LOADER_PACK_IDS.contains(pack.getId()))
-                && Config.INSTANCE.hideBuiltIn)
+                && Config.INSTANCE.hideBuiltIn) {
             return false;
+        } else if (pack instanceof DependencyPack.ModpackResources) {
+            return true;
+        }
 
         // Hide hidden dependency packs depending on configuration settings
         if (pack instanceof final DependencyPack zipperPack) {

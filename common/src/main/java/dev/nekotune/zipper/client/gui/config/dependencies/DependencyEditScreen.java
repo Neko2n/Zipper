@@ -44,11 +44,14 @@ public class DependencyEditScreen extends AbstractConfigScreen {
     private final DependencyEditScreen.OnApply onApply;
     private DependencyPack editing;
     private final Component subtitle;
+    private final Set<String> takenFileNames;
     private SettingsWidgets settingsWidgets;
 
     protected DependencyEditScreen(final Screen below,
-            final DependencyPack dependency, final OnApply onApply) {
+            final DependencyPack dependency, final OnApply onApply,
+            final Set<String> takenFileNames) {
         super(TITLE, below);
+        this.takenFileNames = takenFileNames;
         final MutableComponent subtitle = Component.empty();
         switch (dependency.info.type()) {
             case CLIENT_RESOURCES:
@@ -82,12 +85,19 @@ public class DependencyEditScreen extends AbstractConfigScreen {
         super.init(); // Calls populateSettings
     }
 
+    // What happens when the user presses the "Apply" button
     @Override
     protected void onPressBack() {
         this.backButton.active = false;
+        String fileName = this.settingsWidgets.fileName().getValue();
+        int i = 1;
+        while (this.takenFileNames.contains(fileName)) {
+            fileName = this.settingsWidgets.fileName().getValue() + " (" + i + ")";
+            i++;
+        }
         final var modifiedInfo = new DependencyInfo(
                 this.editing.info.type(),
-                this.settingsWidgets.fileName().getValue(),
+                fileName,
                 this.settingsWidgets.mode().getValue(),
                 this.settingsWidgets.hosts().toMap());
         DependencyPack modified;
@@ -98,6 +108,7 @@ public class DependencyEditScreen extends AbstractConfigScreen {
         }
         this.onApply.accept(this.editing, modified);
         this.editing = modified;
+        this.refresh();
     }
 
     @Override
