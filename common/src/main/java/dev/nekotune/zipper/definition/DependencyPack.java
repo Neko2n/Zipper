@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import dev.nekotune.zipper.Config;
-import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.Zipper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.network.chat.Component;
@@ -164,7 +164,7 @@ public class DependencyPack extends Pack {
         private static final class ModpackResources$Info {
             public static final String NAME = "Modpack Resources";
             public static final Component DESCRIPTION = Component
-                    .translatable(Constants.MOD_ID + ".modpack-resources.description");
+                    .translatable(Zipper.MOD_ID + ".modpack-resources.description");
             public static final PackLocationInfo LOCATION = new PackLocationInfo(NAME,
                     DESCRIPTION, PackSource.BUILT_IN, Optional.empty());
             public static final Metadata META = new Metadata(DESCRIPTION, PackCompatibility.COMPATIBLE,

@@ -3,7 +3,7 @@ package dev.nekotune.zipper.definition.web;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.definition.DependencyInfo;
 import dev.nekotune.zipper.definition.DependencyInfo.Host;
 import dev.nekotune.zipper.definition.web.api.CurseforgeAPI.*;
@@ -60,7 +60,7 @@ public class Curseforge extends WebHost {
         final var matchesGameVersion = files.stream()
                 .filter(file -> {
                     for (final String fileVersion : file.gameVersions()) {
-                        for (final String mcVersion : Constants.MC_VERSIONS) {
+                        for (final String mcVersion : Zipper.MC_VERSIONS) {
                             if (fileVersion.matches(mcVersion))
                                 return true;
                         }

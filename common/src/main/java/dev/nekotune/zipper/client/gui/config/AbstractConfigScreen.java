@@ -52,9 +52,9 @@ public abstract class AbstractConfigScreen extends Screen {
      */
     private final void rebuildSettings() {
         final int listWidth = this.getInnerWidth();
-        this.settingsList.setPosition(this.getInnerPadding(), this.barHeight());
+        this.settingsList.setPosition(this.getInnerMargin(), this.getBarHeight());
         this.settingsList.setWidth(listWidth);
-        this.settingsList.setHeight(this.height - this.barHeight() * 2);
+        this.settingsList.setHeight(this.height - this.getBarHeight() * 2);
         final int listContentWidth = listWidth - this.settingsList.totalInnerPadding();
         final var listBuilder = new SettingsList.SettingsContent.Builder(listContentWidth, this.font);
         populateSettings(listBuilder);
@@ -76,7 +76,7 @@ public abstract class AbstractConfigScreen extends Screen {
         
         backButton.setMessage(getBackButtonMessage());
         backButton.setPosition(this.width / 2 - (backButton.getWidth() / 2),
-                this.height - this.barHeight() / 2 - (backButton.getHeight() / 2));
+                this.height - this.getBarHeight() / 2 - (backButton.getHeight() / 2));
         this.addWidget(this.backButton);
     }
 
@@ -98,7 +98,7 @@ public abstract class AbstractConfigScreen extends Screen {
             final float partialTick) {
 
         // Draw bar background
-        final int barHeight = this.barHeight();
+        final int barHeight = this.getBarHeight();
         guiGraphics.fill(0, 0, this.width, barHeight - 1, BAR_BG_COLOR);
         guiGraphics.fill(0, this.height, this.width, this.height - barHeight + 1, BAR_BG_COLOR);
         guiGraphics.hLine(0, this.width, barHeight - 1, 0x95000000);
@@ -117,7 +117,7 @@ public abstract class AbstractConfigScreen extends Screen {
     public void renderTitle(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
             final float partialTick) {
         guiGraphics.drawCenteredString(this.font, this.title,
-                this.width / 2, this.barHeight() / 2, 0xFFFFFFFF);
+                this.width / 2, this.getBarHeight() / 2, 0xFFFFFFFF);
     }
 
     /**
@@ -132,7 +132,7 @@ public abstract class AbstractConfigScreen extends Screen {
     /**
      * @return The height of the top and bottom bars.
      */
-    protected int barHeight() {
+    protected int getBarHeight() {
         return this.height / 6;
     }
 
@@ -147,7 +147,7 @@ public abstract class AbstractConfigScreen extends Screen {
      * @return The number of pixels between the left side of the screen and the left
      *         side of the scroll list.
      */
-    protected final int getInnerPadding() {
+    protected final int getInnerMargin() {
         return (this.width - this.getInnerWidth()) / 2;
     }
 

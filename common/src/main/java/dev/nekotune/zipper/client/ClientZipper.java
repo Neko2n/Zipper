@@ -13,7 +13,6 @@ import java.util.function.Supplier;
 
 import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.Config;
-import dev.nekotune.zipper.Constants;
 import dev.nekotune.zipper.DownloadManager;
 import dev.nekotune.zipper.DownloadManager.DownloadResult;
 import dev.nekotune.zipper.client.gui.DownloadErrorScreen;
@@ -63,7 +62,7 @@ public class ClientZipper {
      * Call site is loader-dependent.
      */
     public static void clientLoaded() {
-        Constants.LOG.debug("[Client] clientLoaded called");
+        Zipper.LOG.debug("[Client] clientLoaded called");
 
         // Thread safety for race condition between event connection and switch case
         final var canRun = new AtomicBoolean(true);
@@ -130,7 +129,7 @@ public class ClientZipper {
         }
         for (final DownloadResult error : errors.keySet()) {
             final List<String> causes = errors.get(error);
-            Constants.LOG.debug("[Client] Pushing error screen for error " + error.toString() + " with instances "
+            Zipper.LOG.debug("[Client] Pushing error screen for error " + error.toString() + " with instances "
                     + Arrays.toString(causes.toArray()));
             screenStack.push(new DownloadErrorScreen(error, causes,
                     button -> setScreenAtomic(() -> {
@@ -154,7 +153,7 @@ public class ClientZipper {
                 setScreenAtomic$lock.release();
                 return;
             }
-            Constants.LOG.debug("[Client] Setting screen to " + screen.getClass().getName());
+            Zipper.LOG.debug("[Client] Setting screen to " + screen.getClass().getName());
             mc.setScreen(screen);
             setScreenAtomic$lock.release();
         });

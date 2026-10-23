@@ -1,7 +1,8 @@
 package dev.nekotune.zipper.platform;
 
 import com.google.common.base.Suppliers;
-import dev.nekotune.zipper.Constants;
+
+import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.platform.services.IPlatformHelper;
 
 import java.util.ServiceLoader;
@@ -33,7 +34,7 @@ public final class Services {
         final T loadedService = ServiceLoader.load(clazz, loader)
                 .findFirst()
                 .orElseThrow(() -> new NullPointerException("Failed to load service for " + clazz.getName()));
-        Constants.LOG.debug("Loaded {} for service {}", loadedService, clazz);
+        Zipper.LOG.debug("Loaded {} for service {}", loadedService, clazz);
         return loadedService;
     }
 }

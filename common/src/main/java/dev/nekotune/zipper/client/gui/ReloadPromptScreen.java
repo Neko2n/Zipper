@@ -1,7 +1,7 @@
 package dev.nekotune.zipper.client.gui;
 
-import dev.nekotune.zipper.Constants;
 import dev.nekotune.zipper.Resources;
+import dev.nekotune.zipper.Zipper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.AlertScreen;
@@ -25,7 +25,7 @@ public class ReloadPromptScreen extends AlertScreen {
 
     public ReloadPromptScreen(final Runnable callback) {
         super(() -> {
-            Constants.LOG.debug("[ReloadPromptScreen] Reloading resources");
+            Zipper.LOG.debug("[ReloadPromptScreen] Reloading resources");
             callback.run();
             Minecraft.getInstance().reloadResourcePacks();
         }, TITLE, MESSAGE, BUTTON, false);

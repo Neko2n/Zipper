@@ -7,7 +7,7 @@ import java.util.Map;
 import com.google.common.hash.Hashing;
 import com.mojang.blaze3d.platform.NativeImage;
 
-import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.Zipper;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -157,7 +157,7 @@ public class PackWidget extends AbstractWidget {
 
                 return resourcelocation1;
             } catch (Exception exception) {
-                Constants.LOG.warn("Failed to load icon from pack {}", pack.getId(), exception);
+                Zipper.LOG.warn("Failed to load icon from pack {}", pack.getId(), exception);
                 return DEFAULT_ICON;
             }
         }

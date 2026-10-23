@@ -24,7 +24,7 @@ public final class Config {
      * Where the configuration file is located.
      */
     public static final Path FILE_PATH = Path.of("config",
-            "dependencies." + Constants.MOD_ID + ".json");
+            "dependencies." + Zipper.MOD_ID + ".json");
 
     private static final Gson GSON = new GsonBuilder()
             .setVersion(1.0)
@@ -91,15 +91,15 @@ public final class Config {
                 Files.createDirectories(FILE_PATH.getParent());
             }
             Files.writeString(FILE_PATH, json);
-            Constants.LOG.debug("[Config] Saving SUCCESS");
+            Zipper.LOG.debug("[Config] Saving SUCCESS");
         } catch (final IOException e) {
-            Constants.LOG.error("[Config] Saving FAILED: " + e.toString());
+            Zipper.LOG.error("[Config] Saving FAILED: " + e.toString());
         }
     }
 
     private static Optional<Config> fromExisting() {
         if (!(Files.exists(FILE_PATH) && Files.isReadable(FILE_PATH))) {
-            Constants.LOG.debug("[Config] No config file found at "
+            Zipper.LOG.debug("[Config] No config file found at "
                     + FILE_PATH.toString()
                     + "; Using default settings");
             return Optional.empty();
@@ -109,10 +109,10 @@ public final class Config {
             final Config config = GSON.fromJson(reader, Config.class);
             reader.close();
             sanitize(config);
-            Constants.LOG.debug("[Config] Loading SUCCESS");
+            Zipper.LOG.debug("[Config] Loading SUCCESS");
             return Optional.of(config);
         } catch (final IOException | JsonIOException | JsonSyntaxException e) {
-            Constants.LOG.error("[Config] Loading FAILED: " + e.toString());
+            Zipper.LOG.error("[Config] Loading FAILED: " + e.toString());
             try {
                 Path backupPath;
                 long i = 1;
@@ -125,9 +125,9 @@ public final class Config {
                     i++;
                 }
                 Files.copy(FILE_PATH, backupPath, StandardCopyOption.COPY_ATTRIBUTES);
-                Constants.LOG.debug("[Config] Backup created at " + backupPath.toString());
+                Zipper.LOG.debug("[Config] Backup created at " + backupPath.toString());
             } catch (final IOException e2) {
-                Constants.LOG.error("[Config] Backup FAILED: " + e2.toString());
+                Zipper.LOG.error("[Config] Backup FAILED: " + e2.toString());
             }
             return Optional.empty();
         }
@@ -151,7 +151,7 @@ public final class Config {
                         }
                         if (DependencyInfo.SLUG_VALIDATOR.test(slug))
                             continue;
-                        Constants.LOG.warn("[Config] Invalid slug \"" + slug + "\"; removing entry");
+                        Zipper.LOG.warn("[Config] Invalid slug \"" + slug + "\"; removing entry");
                         return false;
                     }
                     if (isWebDependency) {
@@ -171,7 +171,7 @@ public final class Config {
         // Ensure all dependencies are listed in the loadOrder list
         config.dependencies.forEach(info -> {
             if (!config.loadOrder.contains(info.fileName())) {
-                Constants.LOG.warn("Pack \"" + info.fileName() + "\" missing from loadOrder config; adding");
+                Zipper.LOG.warn("Pack \"" + info.fileName() + "\" missing from loadOrder config; adding");
                 config.loadOrder.add(info.fileName());
             }
         });

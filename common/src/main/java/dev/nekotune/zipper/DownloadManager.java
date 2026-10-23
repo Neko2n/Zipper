@@ -92,7 +92,7 @@ public final class DownloadManager {
                 threads.await();
                 state = DownloadState.FINISHED;
             } catch (final InterruptedException e) {
-                Constants.LOG.error(e.toString());
+                Zipper.LOG.error(e.toString());
                 state = DownloadState.INTERRUPTED;
             }
             downloadsFinished.controller.post(null);
@@ -160,34 +160,34 @@ public final class DownloadManager {
                     DOWNLOAD_ERRORS.put(target.fileName(), DownloadResult.EXCEPTION);
                     remaining--;
                     latch.countDown();
-                    Constants.LOG.error("[DownloadManager$WorkerThread] An exception occured", e);
+                    Zipper.LOG.error("[DownloadManager$WorkerThread] An exception occured", e);
                     this.interrupt();
                     return;
                 }
                 switch (result) {
                     case SUCCESS:
-                        Constants.LOG.debug("[DownloadManager] [Working Thread " + this.threadId()
+                        Zipper.LOG.debug("[DownloadManager] [Working Thread " + this.threadId()
                                 + "] Download SUCCESS for target " + target.toString());
                         DOWNLOADED.put(target.fileName(), target);
                         break;
                     case NOT_FOUND:
-                        Constants.LOG.warn("[DownloadManager] [Working Thread " + this.threadId()
+                        Zipper.LOG.warn("[DownloadManager] [Working Thread " + this.threadId()
                                 + "] Download FAILURE; No files found for target " + target.toString()
                                 + "; Report this to the modpack author");
                         DOWNLOAD_ERRORS.put(target.fileName(), result);
                         break;
                     case SECURITY_BLOCKED:
-                        Constants.LOG.warn("[DownloadManager] [Working Thread " + this.threadId()
+                        Zipper.LOG.warn("[DownloadManager] [Working Thread " + this.threadId()
                                 + "] Download FAILURE; Downloads blocked by security permissions; Check your firewall settings");
                         DOWNLOAD_ERRORS.put(target.fileName(), result);
                         break;
                     case TIMED_OUT:
-                        Constants.LOG.warn("[DownloadManager] [Working Thread " + this.threadId()
+                        Zipper.LOG.warn("[DownloadManager] [Working Thread " + this.threadId()
                                 + "] Download FAILURE; Connection timed out");
                         DOWNLOAD_ERRORS.put(target.fileName(), result);
                         break;
                     case EXCEPTION:
-                        Constants.LOG.error("[DownloadManager] [Working Thread " + this.threadId()
+                        Zipper.LOG.error("[DownloadManager] [Working Thread " + this.threadId()
                                 + "] Download FAILURE; An exception occured");
                         DOWNLOAD_ERRORS.put(target.fileName(), result);
                         break;
@@ -208,13 +208,13 @@ public final class DownloadManager {
                 try {
                     response = host.get().download(target);
                 } catch (final SecurityException e) {
-                    Constants.LOG.error("[DownloadManager$tryDownload] An exception occured", e);
+                    Zipper.LOG.error("[DownloadManager$tryDownload] An exception occured", e);
                     return DownloadResult.SECURITY_BLOCKED;
                 } catch (final TimeoutException e) {
-                    Constants.LOG.error("[DownloadManager$tryDownload] An exception occured", e);
+                    Zipper.LOG.error("[DownloadManager$tryDownload] An exception occured", e);
                     return DownloadResult.TIMED_OUT;
                 } catch (final IOException e) {
-                    Constants.LOG.error("[DownloadManager$tryDownload] An exception occured", e);
+                    Zipper.LOG.error("[DownloadManager$tryDownload] An exception occured", e);
                     return DownloadResult.EXCEPTION;
                 }
 
@@ -225,7 +225,7 @@ public final class DownloadManager {
 
                 // Report that there was no file at the given slugs, and try the next host.
                 if (response.statusCode() == 404) {
-                    Constants.LOG.warn(
+                    Zipper.LOG.warn(
                             "[DownloadManager$tryDownload] HTTP 404; No files found for dependency "
                                     + target.fileName() + " at host " + host.toString());
                     continue;

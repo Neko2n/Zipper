@@ -113,8 +113,9 @@ public class DependenciesScreen extends AbstractConfigScreen {
     @Override 
     protected void init() {
         super.init();
-        final int x = this.width - this.createPackButton.getWidth() - 20;
-        this.createPackButton.setPosition(x, this.backButton.getY());
+        final int x = this.getInnerMargin() + this.getInnerWidth() + SettingsList.SCROLL_BAR_WIDTH + 4;
+        final int y = this.height - this.getBarHeight() - this.createPackButton.getHeight() - 4;
+        this.createPackButton.setPosition(x, y);
         this.addWidget(this.createPackButton);
     }
 

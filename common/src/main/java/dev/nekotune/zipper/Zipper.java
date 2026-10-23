@@ -6,6 +6,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.nekotune.zipper.DownloadManager.Download;
 import dev.nekotune.zipper.definition.DependencyInfo;
 import dev.nekotune.zipper.platform.Services;
@@ -17,6 +20,17 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackRepository;
 
 public final class Zipper {
+
+    public static final String MOD_ID = "zipper";
+    public static final String MOD_NAME = "Modpack Dependency Manager";
+    public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
+    
+    /**
+     * The versions of Minecraft that this mod can run on.
+     */
+    public static final String[] MC_VERSIONS = {
+    	"1.21.1"
+    };
 
     public static void init() {
         final IPlatformHelper platform = Services.PLATFORM.get();
@@ -71,14 +85,14 @@ public final class Zipper {
 
         @Override
         public void run() {
-            Constants.LOG.debug("[Zipper] [Download Thread] Thread started");
+            Zipper.LOG.debug("[Zipper] [Download Thread] Thread started");
             final Download threads = DownloadManager.dispatch(targets);
             final long startTime = System.currentTimeMillis();
-            Constants.LOG.debug("[Zipper] [Download Thread] Downloading dependencies...");
+            Zipper.LOG.debug("[Zipper] [Download Thread] Downloading dependencies...");
             try {
                 threads.await();
             } catch (final InterruptedException e) {
-                Constants.LOG.error("[Zipper] [Download Thread] Dependencies download FAILURE; ", e);
+                Zipper.LOG.error("[Zipper] [Download Thread] Dependencies download FAILURE; ", e);
                 Thread.currentThread().interrupt();
                 return;
             }
@@ -91,7 +105,7 @@ public final class Zipper {
                 report += target.fileName() + ", ";
             }
             report = (report + "]").replace(", ]", " ]");
-            Constants.LOG.debug(report);
+            Zipper.LOG.debug(report);
         }
     }
 }

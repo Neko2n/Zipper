@@ -3,7 +3,7 @@ package dev.nekotune.zipper.client.gui.config;
 import java.util.function.Function;
 
 import dev.nekotune.zipper.Config;
-import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.client.gui.config.dependencies.DependenciesScreen;
 import dev.nekotune.zipper.client.gui.widgets.container.SettingsList;
 import dev.nekotune.zipper.client.gui.widgets.input.ToggleInput;
@@ -20,7 +20,7 @@ public class MainConfigScreen extends AbstractConfigScreen {
 
     protected static final String KEY = AbstractConfigScreen.KEY + ".main";
     protected static final Component TITLE = Component
-                .translatableWithFallback(KEY + ".title", Constants.MOD_NAME)
+                .translatableWithFallback(KEY + ".title", Zipper.MOD_NAME)
                 .withStyle(ChatFormatting.BOLD);
 
     public MainConfigScreen(final Screen lastScreen) {

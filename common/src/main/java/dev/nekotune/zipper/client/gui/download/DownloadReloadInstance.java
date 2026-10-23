@@ -4,7 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
-import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.core.Event;
 import net.minecraft.server.packs.resources.ReloadInstance;
 
@@ -30,7 +30,7 @@ public class DownloadReloadInstance implements ReloadInstance {
             try {
                 this.latch.await();
             } catch (final InterruptedException e) {
-                Constants.LOG.error("[DownloadReloadInstance] An exception occured", e);
+                Zipper.LOG.error("[DownloadReloadInstance] An exception occured", e);
             }
         });
     }

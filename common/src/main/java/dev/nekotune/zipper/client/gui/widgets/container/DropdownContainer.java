@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import dev.nekotune.zipper.Constants;
 import dev.nekotune.zipper.Resources;
 import dev.nekotune.zipper.Resources.Gui.Sprites.Widgets;
+import dev.nekotune.zipper.Zipper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -232,7 +232,7 @@ public class DropdownContainer extends AbstractContainerWidget {
     @Override
     public void onClick(final double mouseX, final double mouseY) {
         super.onClick(mouseX, mouseY);
-        Constants.LOG.debug("onClick fired");
+        Zipper.LOG.debug("onClick fired");
         this.setCollapsed(!this.isCollapsed());
         this.onClick.accept(this.isCollapsed());
     }

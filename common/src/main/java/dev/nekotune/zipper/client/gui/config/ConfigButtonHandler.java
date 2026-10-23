@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import dev.nekotune.zipper.Config;
-import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.Zipper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -25,7 +25,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class ConfigButtonHandler {
 
-    protected static final ResourceLocation SPRITE = ResourceLocation.fromNamespaceAndPath(Constants.MOD_ID,
+    protected static final ResourceLocation SPRITE = ResourceLocation.fromNamespaceAndPath(Zipper.MOD_ID,
             "icon/config_button");
     protected static final Tooltip TOOLTIP = Tooltip.create(MainConfigScreen.TITLE.copy()
             .setStyle(Style.EMPTY));

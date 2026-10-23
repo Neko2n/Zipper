@@ -113,9 +113,9 @@ public class DependencyEditScreen extends AbstractConfigScreen {
     public void renderTitle(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
             final float partialTick) {
         guiGraphics.drawCenteredString(this.font, this.title,
-                this.width / 2, this.barHeight() / 2 - 5, 0xFFFFFFFF);
+                this.width / 2, this.getBarHeight() / 2 - 5, 0xFFFFFFFF);
         guiGraphics.drawCenteredString(this.font, this.subtitle,
-                this.width / 2, this.barHeight() / 2 + 5, 0xFFFFFFFF);
+                this.width / 2, this.getBarHeight() / 2 + 5, 0xFFFFFFFF);
     }
 
     // Render a blurred version of the screen below this one

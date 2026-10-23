@@ -10,7 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 
-import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.Zipper;
 
 /**
  * A portion of the Modrinth developer API translated into Java.
@@ -26,7 +26,7 @@ public interface ModrinthAPI extends WebAPI {
     public static interface Endpoints {
 
         public static final String[] HEADERS = new String[] {
-                "User-Agent", "dev.nekotune." + Constants.MOD_ID
+                "User-Agent", "dev.nekotune." + Zipper.MOD_ID
                         + " (https://github.com/Neko2n/Zipper)"
         };
 

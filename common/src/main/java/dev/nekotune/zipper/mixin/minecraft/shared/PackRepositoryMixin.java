@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import dev.nekotune.zipper.Constants;
 import dev.nekotune.zipper.Config;
+import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.definition.DependencyPack;
 import dev.nekotune.zipper.definition.DependencyPack.ModpackResources;
 import dev.nekotune.zipper.definition.DependencyPackSource;
@@ -101,14 +101,14 @@ public class PackRepositoryMixin {
             if (candidate.getPackSource() == PackSource.BUILT_IN
                     || (candidate.isRequired() && candidate.getPackSource() == PackSource.DEFAULT)) {
                 i++;
-                Constants.LOG.debug("[PackRepositoryMixin] Forced dependency insert shifted after pack \""
+                Zipper.LOG.debug("[PackRepositoryMixin] Forced dependency insert shifted after pack \""
                         + candidate.getId() + "\" to position " + i);
             } else {
                 break;
             }
         }
         result.addAll(i, forced);
-        Constants.LOG.debug("[PackRepositoryMixin] Inserted " + forced.size()
+        Zipper.LOG.debug("[PackRepositoryMixin] Inserted " + forced.size()
                 + " forced dependency packs at position " + i);
         
         return result;

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.function.Consumer;
 import dev.nekotune.zipper.Config;
-import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.definition.DependencyPack.ModpackResources;
 import dev.nekotune.zipper.mixin.minecraft.shared.PackRepositoryMixin;
 
@@ -40,7 +40,7 @@ public class DependencyPackSource implements RepositorySource {
                 final DependencyPack pack = DependencyPack.from(dependency);
                 onLoad.accept(pack);
             } catch (final IOException e) {
-                Constants.LOG.error("Failed to load pack for dependency: " + dependency, e);
+                Zipper.LOG.error("Failed to load pack for dependency: " + dependency, e);
             }
         }
 
@@ -48,7 +48,7 @@ public class DependencyPackSource implements RepositorySource {
         try {
             onLoad.accept(ModpackResources.get(this.packType));
         } catch (final IOException e) {
-            Constants.LOG.error("Failed to load modpack resources", e);
+            Zipper.LOG.error("Failed to load modpack resources", e);
         }
     }
 }

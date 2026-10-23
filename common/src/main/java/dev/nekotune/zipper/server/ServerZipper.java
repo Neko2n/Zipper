@@ -11,7 +11,6 @@ import java.util.Set;
 
 import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.Config;
-import dev.nekotune.zipper.Constants;
 import dev.nekotune.zipper.DownloadManager;
 import dev.nekotune.zipper.definition.DependencyInfo;
 import dev.nekotune.zipper.platform.PlatformEvents;
@@ -30,7 +29,7 @@ public class ServerZipper {
 
         // Automatically enable OPTIONAL_ENABLED server packs
         DownloadManager.onDownloadsFinished.connect(() -> {
-            Constants.LOG.debug("[ServerZipper] onDownloadFinished called");
+            Zipper.LOG.debug("[ServerZipper] onDownloadFinished called");
             running.ifPresent((final MinecraftServer server) -> {
                 final PackRepository repo = server.getPackRepository();
                 Zipper.enableDownloadedOptionals(repo, PackType.SERVER_DATA);
@@ -45,7 +44,7 @@ public class ServerZipper {
      * @see PlatformEvents
      */
     public static void serverStarting(final MinecraftServer server) {
-        Constants.LOG.debug("[ServerZipper] serverLoaded called");
+        Zipper.LOG.debug("[ServerZipper] serverLoaded called");
         running = Optional.of(server);
 
         // Configure enabled server data packs
@@ -64,7 +63,7 @@ public class ServerZipper {
             try {
                 Files.write(flagFile, new byte[] {}, StandardOpenOption.CREATE_NEW);
             } catch (final Exception e) {
-                Constants.LOG.error("Exception occured while writing dependency flag file", e);
+                Zipper.LOG.error("Exception occured while writing dependency flag file", e);
             }
             repo.reload();
             final List<DependencyInfo> optionalEnabled = Config.INSTANCE.dependencies.stream()
@@ -89,7 +88,7 @@ public class ServerZipper {
      * @see PlatformEvents
      */
     public static void serverClosing(final MinecraftServer server) {
-        Constants.LOG.debug("[ServerZipper] serverClosing called");
+        Zipper.LOG.debug("[ServerZipper] serverClosing called");
         running = Optional.empty();
     }
 }

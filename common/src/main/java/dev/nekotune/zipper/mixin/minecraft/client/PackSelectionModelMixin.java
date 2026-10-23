@@ -1,6 +1,7 @@
 package dev.nekotune.zipper.mixin.minecraft.client;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,6 +18,11 @@ import net.minecraft.server.packs.repository.PackSource;
 @Mixin(PackSelectionModel.class)
 public abstract class PackSelectionModelMixin {
 
+    private static final Set<String> LOADER_PACK_IDS = Set.of(
+        "mod_resources",
+        "fabric"
+    );
+
     // Hide hidden packs 
     @Redirect(method = "findNewPacks", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/repository/PackRepository;getAvailablePacks()Ljava/util/Collection;"))
     private Collection<Pack> zipper$getVisiblePacks(final PackRepository repository) {
@@ -28,7 +34,8 @@ public abstract class PackSelectionModelMixin {
     private static boolean isVisible(final PackRepository repository, final Pack pack) {
 
         // Hide built-in packs depending on configuration settings
-        if (pack.getPackSource() == PackSource.BUILT_IN && Config.INSTANCE.hideBuiltIn)
+        if ((pack.getPackSource() == PackSource.BUILT_IN || LOADER_PACK_IDS.contains(pack.getId()))
+                && Config.INSTANCE.hideBuiltIn)
             return false;
 
         // Hide hidden dependency packs depending on configuration settings
