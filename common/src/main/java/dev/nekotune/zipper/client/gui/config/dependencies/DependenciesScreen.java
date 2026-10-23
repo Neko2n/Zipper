@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.Resources;
+import dev.nekotune.zipper.client.gui.AbstractPopupScreen;
 import dev.nekotune.zipper.client.gui.config.AbstractConfigScreen;
 import dev.nekotune.zipper.client.gui.widgets.PackWidget;
 import dev.nekotune.zipper.client.gui.widgets.container.SettingsList;
@@ -22,6 +23,7 @@ import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.SpriteIconButton;
+import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.FrameLayout;
@@ -34,6 +36,8 @@ import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 
+// TODO separate packs into sections based on their mode
+// TODO show vanilla packs and allow converting them into zipper packs
 /**
  * Screen which shows a list of active dependencies.
  * Dependencies in the list may be edited with a button, opening
@@ -215,9 +219,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
                     (final Button button) -> {
 
                         // On click, re-build the scroll list with this dependency removed.
-                        // TODO show confirmation pop-up
-                        this.screen.modifiedPacks.remove(pack);
-                        this.screen.refresh();
+                        this.screen.minecraft.setScreen(new DeleteConfirmationScreen(this.screen, this));
                     },
                     true)
                     .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
@@ -392,6 +394,95 @@ public class DependenciesScreen extends AbstractConfigScreen {
             @Override
             protected Component computeDescription() {
                 return this.pack.getDescription();
+            }
+        }
+
+        public static final class DeleteConfirmationScreen extends AbstractPopupScreen<DependenciesScreen> {
+            private static final int CONFIRM_CD_TICKS = 30;
+
+            private boolean confirmed = false;
+            private final Entry entry;
+            private int elapsed = 0;
+            private final StringWidget questionText;
+            private final StringWidget warningText;
+            private final Button confirmButton;
+            private final Button backButton;
+            private final Button.OnPress pressConfirm = $ -> {
+                this.confirmed = true;
+                this.onClose();
+            };
+
+            protected DeleteConfirmationScreen(final DependenciesScreen covering, final Entry entry) {
+                super(covering, 340, 100 + Button.DEFAULT_HEIGHT, Component.empty());
+                this.entry = entry;
+                this.font = covering.minecraft.font;
+                this.questionText = new StringWidget(Component.translatable(KEY + ".delete.popup.question"), this.font);
+                this.warningText = new StringWidget(Component.translatable(KEY + ".delete.popup.warning"), this.font);
+                this.confirmButton = Button.builder(Component.translatable(KEY + ".delete.popup.button.confirm"), pressConfirm)
+                        .size(Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT)
+                        .build();
+                this.backButton = Button.builder(Component.translatable(KEY + ".delete.popup.button.back"), $ -> this.onClose())
+                        .size(Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT)
+                        .build();
+            }
+
+            @Override 
+            public void tick() {
+                this.elapsed++;
+                this.confirmButton.active = this.elapsed >= CONFIRM_CD_TICKS;
+            }
+
+            @Override
+            public void init() {
+                super.init();
+                final FrameLayout layout = new FrameLayout();
+                final LinearLayout column = LinearLayout.vertical();
+                column.addChild(this.questionText, settings -> settings.alignHorizontallyCenter());
+                column.addChild(SpacerElement.height(8));
+                column.addChild(this.warningText, settings -> settings.alignHorizontallyCenter());
+                column.addChild(SpacerElement.height(Button.DEFAULT_HEIGHT));
+                final LinearLayout buttons = LinearLayout.horizontal();
+                buttons.addChild(this.backButton);
+                buttons.addChild(SpacerElement.width(4));
+                buttons.addChild(this.confirmButton);
+                column.addChild(buttons, settings -> settings.alignHorizontallyCenter());
+                layout.addChild(column, settings -> settings.alignHorizontallyCenter().alignVerticallyMiddle());
+                layout.setPosition(this.marginX(), this.marginY());
+                layout.setMinDimensions(this.getPopupWidth(), this.getPopupHeight());
+                layout.arrangeElements();
+                
+                this.confirmButton.active = false;
+                this.addWidget(this.questionText);
+                this.addWidget(this.warningText);
+                this.addWidget(this.backButton);
+                this.addWidget(this.confirmButton);
+            }
+
+            @Override
+            public void onClose() {
+                super.onClose();
+                if (this.confirmed) {
+                    this.entry.screen.modifiedPacks.remove(this.entry.pack);
+                    this.entry.screen.refresh();
+                }
+            }
+
+            @Override
+            public void renderContent(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+                    final float partialTick) {
+                this.questionText.render(guiGraphics, mouseX, mouseY, partialTick);
+                this.warningText.render(guiGraphics, mouseX, mouseY, partialTick);
+                this.confirmButton.render(guiGraphics, mouseX, mouseY, partialTick);
+                this.backButton.render(guiGraphics, mouseX, mouseY, partialTick);
+                
+                // Confirm button cooldown overlay
+                final float alpha = ((float)this.elapsed) / ((float)CONFIRM_CD_TICKS);
+                if (alpha < 1f) {
+                    final int fillWidth = this.confirmButton.getX() + (int)(this.confirmButton.getWidth() * alpha);
+                    guiGraphics.fill(this.confirmButton.getX(), this.confirmButton.getY(),
+                            fillWidth, this.confirmButton.getY() + this.confirmButton.getHeight(),
+                            0x55FFFFFF);
+                }
             }
         }
     }

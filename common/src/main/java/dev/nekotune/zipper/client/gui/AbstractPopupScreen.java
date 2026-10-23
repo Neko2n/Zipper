@@ -10,13 +10,13 @@ import net.minecraft.network.chat.Component;
 /**
  * Temporary screen with modifiable dimensions and a close button.
  */
-public abstract class  AbstractPopupScreen extends Screen {
-    public final Screen screenBelow;
+public abstract class AbstractPopupScreen<T extends Screen> extends Screen {
+    public final T screenBelow;
     protected final Button closeButton;
     protected int popupWidth;
     protected int popupHeight;
 
-    protected AbstractPopupScreen(final Screen covering, final int width, final int height, final Component title) {
+    protected AbstractPopupScreen(final T covering, final int width, final int height, final Component title) {
         super(title);
         this.screenBelow = covering;
         this.popupWidth = 0;

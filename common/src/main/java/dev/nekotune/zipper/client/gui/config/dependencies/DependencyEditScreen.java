@@ -369,7 +369,7 @@ public class DependencyEditScreen extends AbstractConfigScreen {
      * Screen that shows when you click the "?" button next to a host's slug input
      * text box.
      */
-    public static final class HelpButtonPopupScreen extends AbstractPopupScreen {
+    public static final class HelpButtonPopupScreen extends AbstractPopupScreen<DependencyEditScreen> {
 
         public final DependencyInfo.Host host;
 
