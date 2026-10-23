@@ -26,13 +26,11 @@ import net.minecraft.server.packs.PackType;
  *                     once
  *                     downloaded.
  * @param type         Whether the dependency is a resource pack or a data pack.
- * @param loadPriority Determines the order in which dependencies are loaded.
  */
 public record DependencyInfo(
         PackType type,
         String fileName,
         Mode mode,
-        int loadPriority,
         EnumMap<DependencyInfo.Host, String> downloadSlugs) {
 
     /**
@@ -50,7 +48,7 @@ public record DependencyInfo(
      */
     public static final DependencyInfo createDefault(final PackType packType) {
         return new DependencyInfo(packType, "New Dependency", DependencyInfo.Mode.OPTIONAL_ENABLED,
-                0, new EnumMap<>(DependencyInfo.Host.class));
+                new EnumMap<>(DependencyInfo.Host.class));
     }
 
     public DependencyInfo {

@@ -1,5 +1,6 @@
 package dev.nekotune.zipper.client.gui.config.dependencies;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import dev.nekotune.zipper.client.gui.widgets.container.DropdownContainer;
 import dev.nekotune.zipper.client.gui.widgets.container.SettingsList;
 import dev.nekotune.zipper.client.gui.widgets.input.SelectionInput;
 import dev.nekotune.zipper.definition.DependencyInfo;
+import dev.nekotune.zipper.definition.DependencyPack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -40,15 +42,15 @@ public class DependencyEditScreen extends AbstractConfigScreen {
     private static final int BG_COLOR = 0xBB000000;
 
     private final DependencyEditScreen.OnApply onApply;
-    private DependencyInfo editing;
+    private DependencyPack editing;
     private final Component subtitle;
     private SettingsWidgets settingsWidgets;
 
     protected DependencyEditScreen(final Screen below,
-            final DependencyInfo dependency, final OnApply onApply) {
+            final DependencyPack dependency, final OnApply onApply) {
         super(TITLE, below);
         final MutableComponent subtitle = Component.empty();
-        switch (dependency.type()) {
+        switch (dependency.info.type()) {
             case CLIENT_RESOURCES:
                 subtitle.append(Component
                         .translatableWithFallback(KEY + ".subtitle.client-resources",
@@ -83,12 +85,17 @@ public class DependencyEditScreen extends AbstractConfigScreen {
     @Override
     protected void onPressBack() {
         this.backButton.active = false;
-        final var modified = new DependencyInfo(
-                this.editing.type(),
+        final var modifiedInfo = new DependencyInfo(
+                this.editing.info.type(),
                 this.settingsWidgets.fileName().getValue(),
                 this.settingsWidgets.mode().getValue(),
-                this.editing.loadPriority(),
                 this.settingsWidgets.hosts().toMap());
+        DependencyPack modified;
+        try {
+            modified = DependencyPack.from(modifiedInfo);
+        } catch (final IOException e) {
+            modified = DependencyPack.from(modifiedInfo, DependencyPack.TEMPLATE_META);
+        }
         this.onApply.accept(this.editing, modified);
         this.editing = modified;
     }
@@ -164,8 +171,8 @@ public class DependencyEditScreen extends AbstractConfigScreen {
         private static EditBox initFileName(final DependencyEditScreen editScreen) {
             final var fileNameEditBox = new EditBox(editScreen.font, Button.DEFAULT_WIDTH,
                     Button.DEFAULT_HEIGHT,
-                    Component.literal(editScreen.editing.fileName()));
-            fileNameEditBox.setValue(editScreen.editing.fileName());
+                    Component.literal(editScreen.editing.info.fileName()));
+            fileNameEditBox.setValue(editScreen.editing.info.fileName());
             fileNameEditBox.setResponder(text -> editScreen.backButton.active = true);
             return fileNameEditBox;
         }
@@ -174,7 +181,7 @@ public class DependencyEditScreen extends AbstractConfigScreen {
         private static SelectionInput<DependencyInfo.Mode> initModeInput(final DependencyEditScreen editScreen) {
             final var modeInput = new SelectionInput<DependencyInfo.Mode>(0, 0,
                     Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT,
-                    Set.of(DependencyInfo.Mode.values()), editScreen.editing.mode(),
+                    Set.of(DependencyInfo.Mode.values()), editScreen.editing.info.mode(),
                     $ -> editScreen.backButton.active = true);
             for (final DependencyInfo.Mode mode : DependencyInfo.Mode.values()) {
 
@@ -212,7 +219,7 @@ public class DependencyEditScreen extends AbstractConfigScreen {
                         host, 0, 0, hostsDropdown.getInnerWidth(), editScreen.font,
                         $ -> editScreen.minecraft.setScreen(new HelpButtonPopupScreen(editScreen, host)));
                 hostWidget.setResponder(values -> editScreen.backButton.active = true);
-                hostWidget.slugInput.setValue(editScreen.editing.downloadSlugs()
+                hostWidget.slugInput.setValue(editScreen.editing.info.downloadSlugs()
                         .getOrDefault(host, ""));
                 hostsWidgets.put(host, hostWidget);
                 hostsDropdown.addChild(hostWidget);
@@ -398,9 +405,9 @@ public class DependencyEditScreen extends AbstractConfigScreen {
     }
 
     @FunctionalInterface
-    public static interface OnApply extends BiConsumer<DependencyInfo, DependencyInfo> {
+    public static interface OnApply extends BiConsumer<DependencyPack, DependencyPack> {
 
         @Override
-        void accept(final DependencyInfo original, final DependencyInfo modified);
+        void accept(final DependencyPack original, final DependencyPack modified);
     }
 }

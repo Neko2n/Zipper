@@ -5,18 +5,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.Since;
 import dev.nekotune.zipper.definition.DependencyInfo;
-import net.minecraft.server.packs.PackType;
 
 public final class Config {
 
@@ -37,7 +37,10 @@ public final class Config {
     public boolean production = false;
 
     @Since(1.0)
-    public Map<String, DependencyInfo> dependencies = new HashMap<>();
+    public HashSet<DependencyInfo> dependencies = new HashSet<>();
+
+    @Since(1.0)
+    public LinkedList<String> loadOrder = new LinkedList<>();
 
     @Since(1.0)
     public boolean hideForced = true;
@@ -65,6 +68,13 @@ public final class Config {
     }
 
     private Config() {
+    }
+
+    /**
+     * Returns the order number in which the given pack loads.
+     */
+    public int getLoadOrder(final DependencyInfo info) {
+        return this.loadOrder.indexOf(info.fileName());
     }
 
     /**
@@ -98,7 +108,7 @@ public final class Config {
             sanitize(config);
             Constants.LOG.debug("[Config] Loading SUCCESS");
             return Optional.of(config);
-        } catch (final IOException e) {
+        } catch (final IOException | JsonIOException | JsonSyntaxException e) {
             Constants.LOG.error("[Config] Loading FAILED: " + e.toString());
             try {
                 Path backupPath;
@@ -124,14 +134,13 @@ public final class Config {
 
         // Filter out invalid entries and count number of web dependencies for safety
         final AtomicInteger webDependencies = new AtomicInteger(0);
-        final List<DependencyInfo> dependencies = config.dependencies.keySet().stream()
-                .filter((final String fileName) -> {
-                    final DependencyInfo dependency = config.dependencies.get(fileName);
-                    if (dependency.type() == null || dependency.fileName() == null) {
+        final List<DependencyInfo> dependencies = config.dependencies.stream()
+                .filter((final DependencyInfo info) -> {
+                    if (info.type() == null || info.fileName() == null) {
                         return false;
                     }
                     boolean isWebDependency = false;
-                    for (final String slug : dependency.downloadSlugs().values()) {
+                    for (final String slug : info.downloadSlugs().values()) {
                         if (!slug.isEmpty()) {
                             isWebDependency = true;
                         } else {
@@ -147,30 +156,22 @@ public final class Config {
                     }
                     return true;
                 })
-                .map(fileName -> config.dependencies.get(fileName))
                 .toList();
         if (webDependencies.get() > 100) {
             throw new IllegalStateException("Too many web dependencies. For user safety, downloads are capped at 100.");
         }
+        config.dependencies = new HashSet<>(dependencies);
 
-        // Ensure packs' loading priorities map cleanly to their order in their repositories
-        final Comparator<DependencyInfo> sortByPriority = Comparator
-                .comparingInt((final DependencyInfo d) -> d.loadPriority());
-        config.dependencies = new HashMap<>();
-        for (final PackType packType : PackType.values()) {
-            final List<DependencyInfo> sorted = dependencies.stream()
-                    .filter(d -> d.type() == packType)
-                    .sorted(sortByPriority)
-                    .toList();
-            for (int i = 0; i < sorted.size(); i++) {
-                DependencyInfo dependency = sorted.get(i);
-                if (dependency.loadPriority() != i) {
-                    dependency = new DependencyInfo(dependency.type(), dependency.fileName(),
-                            dependency.mode(), i, dependency.downloadSlugs());
-                }
-                config.dependencies.put(dependency.fileName(), dependency);
+        // Remove duplicates from the loadOrder list
+        config.loadOrder = new LinkedList<String>(config.loadOrder.stream().distinct().toList());
+
+        // Ensure all dependencies are listed in the loadOrder list
+        config.dependencies.forEach(info -> {
+            if (!config.loadOrder.contains(info.fileName())) {
+                Constants.LOG.warn("Pack \"" + info.fileName() + "\" missing from loadOrder config; adding");
+                config.loadOrder.add(info.fileName());
             }
-        }
+        });
 
         config.save();
     }

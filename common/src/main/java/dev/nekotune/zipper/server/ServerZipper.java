@@ -67,13 +67,13 @@ public class ServerZipper {
                 Constants.LOG.error("Exception occured while writing dependency flag file", e);
             }
             repo.reload();
-            final List<DependencyInfo> optionalEnabled = Config.INSTANCE.dependencies.values().stream()
+            final List<DependencyInfo> optionalEnabled = Config.INSTANCE.dependencies.stream()
                     .filter(dependency -> dependency.mode() == DependencyInfo.Mode.OPTIONAL_ENABLED
                             && dependency.type() == PackType.SERVER_DATA)
                     .toList();
             final Set<String> selectedPacks = new LinkedHashSet<>(repo.getSelectedIds());
             selectedPacks.addAll(optionalEnabled.stream()
-                    .sorted(Comparator.comparingInt(v -> v.loadPriority()))
+                    .sorted(Comparator.comparingInt(v -> Config.INSTANCE.getLoadOrder(v)))
                     .map(DependencyInfo::packId)
                     .toList());
             repo.setSelected(selectedPacks);

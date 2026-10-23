@@ -26,6 +26,8 @@ import net.minecraft.world.flag.FeatureFlagSet;
  */
 public class DependencyPack extends Pack {
 
+    public static final Pack.Metadata TEMPLATE_META = new Pack.Metadata(Component.empty(), PackCompatibility.COMPATIBLE,
+            FeatureFlagSet.of(), List.of());
     public static final int TOKEN_COLOR = 0xFFF5AA42;
 
     private static final Component BADGE = Component.literal(" (modpack)")
@@ -48,6 +50,42 @@ public class DependencyPack extends Pack {
         this.info = info;
     }
 
+    private static PackLocationInfo getPackLocation(final DependencyInfo info) {
+        return new PackLocationInfo(info.packId(),
+                Component.literal(info.fileName()), SOURCE, Optional.empty());
+    }
+
+    private static Pack.ResourcesSupplier getPackSupplier(final DependencyInfo info) {
+        final Pack.ResourcesSupplier supplier;
+        if (Files.isDirectory(info.packDir())) {
+            supplier = new PathPackResources.PathResourcesSupplier(info.packDir());
+        } else {
+            supplier = new FilePackResources.FileResourcesSupplier(info.packDir());
+        }
+        return supplier;
+    }
+
+    private static PackSelectionConfig getPackSelectionConfig(final DependencyInfo info) {
+        final boolean required = info.mode() == DependencyInfo.Mode.FORCED;
+        final Position pos = required ? Position.BOTTOM : Position.TOP;
+        return new PackSelectionConfig(required, pos, required);
+    }
+
+    /**
+     * Builds a dependency pack from the given dependency information, with the
+     * given metadata.
+     * 
+     * @param info The information about the dependency to build the pack for.
+     * @param meta The metadata to apply to the pack.
+     * @return The newly created DependencyPack object.
+     */
+    public static DependencyPack from(final DependencyInfo info, final Metadata meta) {
+        final PackLocationInfo location = getPackLocation(info);
+        final Pack.ResourcesSupplier supplier = getPackSupplier(info);
+        final PackSelectionConfig selectionConfig = getPackSelectionConfig(info);
+        return new DependencyPack(info, location, supplier, meta, selectionConfig);
+    }
+
     /**
      * Builds a dependency pack from the given dependency information.
      * 
@@ -56,22 +94,14 @@ public class DependencyPack extends Pack {
      * @throws IOException If the pack's file metadata could not be read.
      */
     public static DependencyPack from(final DependencyInfo info) throws IOException {
-        final var location = new PackLocationInfo(info.packId(),
-                Component.literal(info.fileName()), SOURCE, Optional.empty());
-        final Pack.ResourcesSupplier supplier;
-        if (Files.isDirectory(info.packDir())) {
-            supplier = new PathPackResources.PathResourcesSupplier(info.packDir());
-        } else {
-            supplier = new FilePackResources.FileResourcesSupplier(info.packDir());
-        }
+        final PackLocationInfo location = getPackLocation(info);
+        final Pack.ResourcesSupplier supplier = getPackSupplier(info);
+        final PackSelectionConfig selectionConfig = getPackSelectionConfig(info);
         final int version = SharedConstants.getCurrentVersion().getPackVersion(info.type());
         final Metadata meta = Pack.readPackMetadata(location, supplier, version);
         if (meta == null) {
             throw new IOException("File metadata could not be read for dependency " + info.toString());
         }
-        final boolean required = info.mode() == DependencyInfo.Mode.FORCED;
-        final Position pos = required ? Position.BOTTOM : Position.TOP;
-        final var selectionConfig = new PackSelectionConfig(required, pos, required);
         return new DependencyPack(info, location, supplier, meta, selectionConfig);
     }
 
@@ -127,7 +157,7 @@ public class DependencyPack extends Pack {
                 Files.createDirectories(ASSETS_PATH);
             }
             final var info = new DependencyInfo(packType, ModpackResources$Info.ID,
-                    DependencyInfo.Mode.FORCED, 0, new EnumMap<>(DependencyInfo.Host.class));
+                    DependencyInfo.Mode.FORCED, new EnumMap<>(DependencyInfo.Host.class));
             final ModpackResources instance = new ModpackResources(info);
             cache.put(packType, instance);
             return instance;

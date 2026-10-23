@@ -1,9 +1,9 @@
 package dev.nekotune.zipper.mixin.minecraft.shared;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.definition.DependencyPack;
 import dev.nekotune.zipper.definition.DependencyPack.ModpackResources;
 import dev.nekotune.zipper.definition.DependencyPackSource;
@@ -59,9 +60,9 @@ public class PackRepositoryMixin {
     private static List<Pack> reorderDependencies(final List<Pack> packs) {
 
         // Sort dependency packs into lists
-        final List<DependencyPack> modpackResources = new ArrayList<>();
-        final List<DependencyPack> forced = new ArrayList<>();
-        final List<DependencyPack> support = new ArrayList<>();
+        final LinkedList<DependencyPack> modpackResources = new LinkedList<>();
+        final LinkedList<DependencyPack> forced = new LinkedList<>();
+        final LinkedList<DependencyPack> support = new LinkedList<>();
         for (final Pack pack : packs) {
             if (!(pack instanceof final DependencyPack dependency))
                 continue;
@@ -82,14 +83,14 @@ public class PackRepositoryMixin {
         }
 
         // Remove support packs
-        final List<Pack> result = new ArrayList<>(packs);
+        final LinkedList<Pack> result = new LinkedList<>(packs);
         result.removeAll(support);
 
         // Sort forced packs by priority
-        forced.sort(Comparator.comparingInt(
-                (final DependencyPack pack) -> pack.info.loadPriority()));
+        forced.sort(Comparator.comparingInt((final DependencyPack pack) -> Config.INSTANCE.getLoadOrder(pack.info))
+                .reversed());
 
-        // Modpack resources load after forced dependencies
+        // Modpack resources are always-on-top forced packs
         forced.addAll(modpackResources);
 
         // Remove and re-insert forced packs after built-in packs

@@ -138,8 +138,7 @@ public class ScrollContainer extends AbstractContainerWidget {
                 this.isScrolling = true;
                 return true;
             }
-            final boolean consumed = super.mouseClicked(mouseX, mouseY, button);
-            return consumed;
+            return super.clicked(mouseX, mouseY) && super.mouseClicked(mouseX, mouseY, button);
         }
     }
 

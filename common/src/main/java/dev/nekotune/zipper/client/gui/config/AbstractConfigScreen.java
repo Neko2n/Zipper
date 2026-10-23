@@ -41,7 +41,8 @@ public abstract class AbstractConfigScreen extends Screen {
     protected abstract void populateSettings(final SettingsList.SettingsContent.Builder builder);
 
     /**
-     * @return The {@link Button#getMessage()} result for {@link AbstractConfigScreen#backButton}
+     * @return The {@link Button#getMessage()} result for
+     *         {@link AbstractConfigScreen#backButton}
      */
     public abstract Component getBackButtonMessage();
 
@@ -59,7 +60,7 @@ public abstract class AbstractConfigScreen extends Screen {
         populateSettings(listBuilder);
         this.settingsList.setContent(listBuilder.build());
     }
-    
+
     /**
      * Calls {@link AbstractConfigScreen#rebuildSettings()}.
      */
@@ -134,7 +135,8 @@ public abstract class AbstractConfigScreen extends Screen {
     }
 
     /**
-     * @return The number of pixels between the left side of the screen and the left side of the scroll list.
+     * @return The number of pixels between the left side of the screen and the left
+     *         side of the scroll list.
      */
     protected final int getInnerPadding() {
         return (this.width - this.getInnerWidth()) / 2;

@@ -43,7 +43,7 @@ public final class Zipper {
                 .toList();
         final Set<String> selectedPacks = new LinkedHashSet<>(repo.getSelectedIds());
         selectedPacks.addAll(optionalEnabled.stream()
-                .sorted(Comparator.comparingInt(v -> v.loadPriority()))
+                .sorted(Comparator.comparingInt(v -> Config.INSTANCE.getLoadOrder(v)))
                 .map(DependencyInfo::packId)
                 .toList());
         repo.setSelected(selectedPacks);
@@ -62,7 +62,7 @@ public final class Zipper {
         private DownloadTaskThread() {
 
             // Build a list of download targets, excluding those already downloaded
-            this.targets = new ArrayList<>(Config.INSTANCE.dependencies.values().stream()
+            this.targets = new ArrayList<>(Config.INSTANCE.dependencies.stream()
                     .filter(target -> {
                         final boolean isWebDependency = !target.downloadSlugs().values().stream().allMatch(String::isBlank);
                         return isWebDependency && !target.fileExists();
