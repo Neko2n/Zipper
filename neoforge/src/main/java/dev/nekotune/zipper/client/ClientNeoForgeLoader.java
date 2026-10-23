@@ -1,6 +1,6 @@
 package dev.nekotune.zipper.client;
 
-import dev.nekotune.zipper.Constants;
+import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.platform.PlatformEvents;
 
 import net.neoforged.api.distmarker.Dist;
@@ -9,7 +9,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-@Mod(value = Constants.MOD_ID, dist = Dist.CLIENT)
+@Mod(value = Zipper.MOD_ID, dist = Dist.CLIENT)
 public class ClientNeoForgeLoader {
     
     public ClientNeoForgeLoader() {

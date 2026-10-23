@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
-@Mod(Constants.MOD_ID)
+@Mod(Zipper.MOD_ID)
 public class ForgeLoader {
 
     private final FMLJavaModLoadingContext context;

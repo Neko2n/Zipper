@@ -11,7 +11,7 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
-@Mod(Constants.MOD_ID)
+@Mod(Zipper.MOD_ID)
 public class NeoForgeLoader {
 
     public NeoForgeLoader(final ModContainer mod) {
