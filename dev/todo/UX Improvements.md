@@ -1,5 +1,5 @@
 
-## 1. Pack selection screen
+## 1. ~~Pack selection screen~~
 
 Change DependenciesScreen to a one-column pack list.
 The list should be almost identical to a TransferablePackList: display packs with their icon, title, & description; packs can be re-ordered via. up and down arrow buttons which show on hover.
@@ -11,7 +11,7 @@ For the web globe icon: the image will be tinted yellow with an exclamation mark
 Packs should show their edit and delete buttons on the right when hovered.
 
 
-## 2. Loading priorities handled via. arrows
+## 2. ~~Loading priorities handled via. arrows~~
 
 Remove the loading priority option from DependencyEditScreen.
 
@@ -38,11 +38,6 @@ Packs that are in the default vanilla pack folders (resourcepacks and datapacks)
 Instead of edit & delete buttons, regular packs have one "convert" button which changes them into a Zipper pack with default values and the mode OPTIONAL_DISABLED. Clicking this first converts the pack (moves the local file into .zipper subdirectory), and then opens a DependencyEditScreen for the pack.
 
 
-## 5. Modpack resources icon
-
-Add a custom deepslate block icon for modpack resources. This icon is copied into the modpack resources pack folder if one is not already present. This means that modpack authors can override it with their own icon.
-
-
-## 6. Action safety
+## 5. Action safety
 
 Add a confirmation pop-up for clicking the "delete" button for dependencies on a DependenciesScreen.
