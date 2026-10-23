@@ -4,7 +4,7 @@ import dev.nekotune.zipper.definition.DependencyInfo;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
-public class Resources {
+public interface Resources {
 
     public static interface Gui {
         public static interface Sprites {

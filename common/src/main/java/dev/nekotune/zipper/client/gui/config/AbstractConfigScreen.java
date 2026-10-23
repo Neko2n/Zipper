@@ -69,6 +69,18 @@ public abstract class AbstractConfigScreen extends Screen {
     }
 
     @Override
+    protected void init() {
+        super.init();
+        this.rebuildSettings();
+        this.addWidget(this.settingsList);
+        
+        backButton.setMessage(getBackButtonMessage());
+        backButton.setPosition(this.width / 2 - (backButton.getWidth() / 2),
+                this.height - this.barHeight() / 2 - (backButton.getHeight() / 2));
+        this.addWidget(this.backButton);
+    }
+
+    @Override
     public void render(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
             final float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -114,9 +126,6 @@ public abstract class AbstractConfigScreen extends Screen {
      */
     public void renderBottomButton(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
             final float partialTick) {
-        backButton.setMessage(getBackButtonMessage());
-        backButton.setPosition(this.width / 2 - (backButton.getWidth() / 2),
-                this.height - this.barHeight() / 2 - (backButton.getHeight() / 2));
         backButton.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
@@ -154,14 +163,6 @@ public abstract class AbstractConfigScreen extends Screen {
      */
     protected void onPressBack() {
         this.onClose();
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        this.rebuildSettings();
-        this.addWidget(this.settingsList);
-        this.addWidget(this.backButton);
     }
 
     /**

@@ -46,6 +46,9 @@ public final class Config {
     public boolean hideForced = true;
 
     @Since(1.0)
+    public boolean hideBuiltIn = true;
+
+    @Since(1.0)
     public boolean warnEnabled = true;
 
     @Since(1.0)

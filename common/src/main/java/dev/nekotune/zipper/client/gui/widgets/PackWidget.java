@@ -48,10 +48,10 @@ public class PackWidget extends AbstractWidget {
         this.minecraft = minecraft;
         this.pack = pack;
         this.nameDisplayCache = computeName();
-        this.descriptionDisplayCache = computeDescription();
+        this.descriptionDisplayCache = computeDescriptionLabel();
     }
 
-    private FormattedCharSequence computeName() {
+    protected FormattedCharSequence computeName() {
         final Component title = pack.getTitle();
         final Font font = this.minecraft.font;
         int i = font.width(title);
@@ -65,9 +65,12 @@ public class PackWidget extends AbstractWidget {
         }
     }
 
-    private MultiLineLabel computeDescription() {
-        final Component text = PackUtils.getExtendedDescription(pack);
-        return MultiLineLabel.create(this.minecraft.font, this.getWidth() - ICON_SIZE, 2, new Component[] { text });
+    private MultiLineLabel computeDescriptionLabel() {
+        return MultiLineLabel.create(this.minecraft.font, this.getWidth() - ICON_SIZE, 2, new Component[] { computeDescription() });
+    }
+
+    protected Component computeDescription() {
+        return PackUtils.getExtendedDescription(pack);
     }
 
     public Component getNarration() {
@@ -82,7 +85,7 @@ public class PackWidget extends AbstractWidget {
     public void setWidth(final int width) {
         super.setWidth(width);
         this.nameDisplayCache = computeName();
-        this.descriptionDisplayCache = computeDescription();
+        this.descriptionDisplayCache = computeDescriptionLabel();
     }
 
     @Override

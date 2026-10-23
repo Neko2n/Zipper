@@ -5,9 +5,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import dev.nekotune.zipper.Config;
+import dev.nekotune.zipper.Constants;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.network.chat.Component;
@@ -123,16 +125,14 @@ public class DependencyPack extends Pack {
          * The directory which holds modpack resources.
          */
         private static final String FOLDER = "modpack";
-        private static final Path ASSETS_PATH = Path.of("resourcepacks", FOLDER, "assets");
-        private static final Path DATA_PATH = Path.of("datapacks", FOLDER, "data");
-
+        private static final EnumMap<PackType, Path> PATHS = new EnumMap<>(Map.of(
+                PackType.CLIENT_RESOURCES, Path.of("resourcepacks", FOLDER, "assets"),
+                PackType.SERVER_DATA, Path.of("datapacks", FOLDER, "data")));
         private static final EnumMap<PackType, ModpackResources> cache = new EnumMap<>(PackType.class);
 
         private ModpackResources(final DependencyInfo info) {
             super(info, ModpackResources$Info.LOCATION,
-                    info.type() == PackType.CLIENT_RESOURCES
-                            ? new PathPackResources.PathResourcesSupplier(ASSETS_PATH.getParent())
-                            : new PathPackResources.PathResourcesSupplier(DATA_PATH.getParent()),
+                    new PathPackResources.PathResourcesSupplier(PATHS.get(info.type()).getParent()),
                     ModpackResources$Info.META, ModpackResources$Info.SELECTION_CONFIG);
         }
 
@@ -150,13 +150,11 @@ public class DependencyPack extends Pack {
         }
 
         private static ModpackResources define(final PackType packType) throws IOException {
-            if (!Files.exists(DATA_PATH)) {
-                Files.createDirectories(DATA_PATH);
+            final Path directory = PATHS.get(packType);
+            if (!Files.exists(directory)) {
+                Files.createDirectories(directory);
             }
-            if (!Files.exists(ASSETS_PATH)) {
-                Files.createDirectories(ASSETS_PATH);
-            }
-            final var info = new DependencyInfo(packType, ModpackResources$Info.ID,
+            final var info = new DependencyInfo(packType, ModpackResources$Info.NAME,
                     DependencyInfo.Mode.FORCED, new EnumMap<>(DependencyInfo.Host.class));
             final ModpackResources instance = new ModpackResources(info);
             cache.put(packType, instance);
@@ -164,11 +162,12 @@ public class DependencyPack extends Pack {
         }
 
         private static final class ModpackResources$Info {
-            public static final String ID = "modpack";
-            public static final Component NAME = Component.literal("modpack resources");
-            public static final PackLocationInfo LOCATION = new PackLocationInfo(ID,
-                    NAME, PackSource.BUILT_IN, Optional.empty());
-            public static final Metadata META = new Metadata(NAME, PackCompatibility.COMPATIBLE,
+            public static final String NAME = "Modpack Resources";
+            public static final Component DESCRIPTION = Component
+                    .translatable(Constants.MOD_ID + ".modpack-resources.description");
+            public static final PackLocationInfo LOCATION = new PackLocationInfo(NAME,
+                    DESCRIPTION, PackSource.BUILT_IN, Optional.empty());
+            public static final Metadata META = new Metadata(DESCRIPTION, PackCompatibility.COMPATIBLE,
                     FeatureFlagSet.of(), List.of());
             public static final PackSelectionConfig SELECTION_CONFIG = new PackSelectionConfig(
                     true, Position.BOTTOM, true);

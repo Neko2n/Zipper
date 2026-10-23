@@ -56,6 +56,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
     private final HashSet<DependencyPack> originals;
     private final HashSet<DependencyPack> modifying;
     private final PackType packType;
+    protected final Button createPackButton;
 
     public DependenciesScreen(final Screen lastScreen, final PackType packType) {
         super(TITLES.get(packType), lastScreen);
@@ -71,6 +72,13 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 .toList());
         this.modifying = new HashSet<>(this.originals);
         this.packType = packType;
+        this.createPackButton = Button.builder(
+                Component.literal("+").withStyle(ChatFormatting.BOLD),
+                (final Button button) -> editDependency(
+                        DependencyPack.from(DependencyInfo.createDefault(this.packType),
+                                DependencyPack.TEMPLATE_META)))
+                .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
+                .build();
     }
 
     /**
@@ -102,6 +110,21 @@ public class DependenciesScreen extends AbstractConfigScreen {
         this.minecraft.setScreen(new DependencyEditScreen(this, dependency, injectModified));
     }
 
+    @Override 
+    protected void init() {
+        super.init();
+        final int x = this.width - this.createPackButton.getWidth() - 20;
+        this.createPackButton.setPosition(x, this.backButton.getY());
+        this.addWidget(this.createPackButton);
+    }
+
+    @Override
+    public void renderBottomButton(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+            final float partialTick) {
+        super.renderBottomButton(guiGraphics, mouseX, mouseY, partialTick);
+        this.createPackButton.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
     @Override
     protected void populateSettings(final SettingsList.SettingsContent.Builder builder) {
         final var sorted = this.modifying.stream()
@@ -120,15 +143,6 @@ public class DependenciesScreen extends AbstractConfigScreen {
             above = Optional.of(entry);
             builder.addElement(entry);
         }
-
-        // Button to add a new dependency with default values to the list
-        builder.addElement(Button.builder(
-                Component.literal("+").withStyle(ChatFormatting.BOLD),
-                (final Button button) -> editDependency(
-                        DependencyPack.from(DependencyInfo.createDefault(this.packType),
-                                DependencyPack.TEMPLATE_META)))
-                .size(Button.DEFAULT_HEIGHT * 2, Button.DEFAULT_HEIGHT)
-                .build(), Component.translatableWithFallback(KEY + ".add.narration", "Add new dependency"));
     }
 
     @Override
@@ -147,7 +161,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
         return Component.translatableWithFallback(KEY + ".button.back", "Apply");
     }
 
-    protected class Entry extends AbstractContainerWidget {
+    protected static class Entry extends AbstractContainerWidget {
 
         /** Copied from {@link TransferableSelectionList} */
         private static final int HOVER_OVERLAY = 0xA0909090;
@@ -159,7 +173,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
             public static final Resources.Sprite DECREASE_PRIORITY_HIGHLIGHTED = Resources.Gui.Sprites.Widgets.TransferableSelection.MOVE_DOWN_HIGHLIGHTED;
         }
 
-        protected final PackWidget packWidget;
+        protected final ZipperPackWidget packWidget;
         protected final PriorityButtons priorityButtons;
         protected final Button editButton;
         protected final Button deleteButton;
@@ -176,7 +190,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
             // Button which modifies the dependency's information
             final Resources.Sprite editIcon = Resources.Gui.Sprites.Icons.EDIT;
             this.editButton = SpriteIconButton.builder(Component.empty(),
-                    (final Button button) -> editDependency(pack),
+                    (final Button button) -> this.screen.editDependency(pack),
                     true)
                     .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
                     .sprite(editIcon.location(), editIcon.width(), editIcon.height())
@@ -205,7 +219,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
                             "Delete dependency").withStyle(ChatFormatting.RED)));
 
             // Display information about the pack (icon, title, description)
-            this.packWidget = new PackWidget(this.screen.minecraft, 0, 0, 0, pack);
+            this.packWidget = new ZipperPackWidget(this);
 
             final var upButton = new TransferButton(
                     Component.translatableWithFallback(KEY + ".move-up.narration", "Increase priority"),
@@ -226,6 +240,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
             layout.setPosition(this.getX(), this.getY());
             layout.addChild(this.packWidget, settings -> settings.alignHorizontallyLeft().alignVerticallyMiddle());
             final LinearLayout rightGroup = LinearLayout.horizontal();
+            rightGroup.addChild(SpacerElement.width(4));
             rightGroup.addChild(this.editButton, settings -> settings.alignVerticallyMiddle());
             rightGroup.addChild(SpacerElement.width(4));
             rightGroup.addChild(this.deleteButton, settings -> settings.alignVerticallyMiddle());
@@ -357,6 +372,21 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 guiGraphics.blitSprite(activeSprite.location(),
                         this.getX() - sprite.width() / 2, this.getY() - this.spriteOffsetY,
                         sprite.width(), sprite.height());
+            }
+        }
+
+        /**
+         * Custom PackWidget with a simplified description
+         */
+        public static class ZipperPackWidget extends PackWidget {
+
+            public ZipperPackWidget(final Entry entry) {
+                super(entry.screen.minecraft, 0, 0, 0, entry.pack);
+            }
+
+            @Override
+            protected Component computeDescription() {
+                return this.pack.getDescription();
             }
         }
     }

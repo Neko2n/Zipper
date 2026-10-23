@@ -11,7 +11,16 @@ For the web globe icon: the image will be tinted yellow with an exclamation mark
 Packs should show their edit and delete buttons on the right when hovered.
 
 
-## 2. List packs separately by mode
+## 2. Loading priorities handled via. arrows
+
+Remove the loading priority option from DependencyEditScreen.
+
+Loading priority will instead be handled by packs' ordering in DependenciesScreens, controlled by the same arrow buttons that exist in PackSelectionScreens.
+
+Packs can no longer have matching loading priorities.
+
+
+## 3. List packs separately by mode
 
 Packs listed on DependenciesScreens will be separated into "categories" depending on their mode, with mode categories sorted by their loading order.
 
@@ -22,15 +31,6 @@ Below that will be forced packs, and further below will be support packs.
 Packs may only be re-ordered within their given mode section. 
 
 
-## 3. Loading priorities handled via. arrows
-
-Remove the loading priority option from DependencyEditScreen.
-
-Loading priority will instead be handled by packs' ordering in DependenciesScreens, controlled by the same arrow buttons that exist in PackSelectionScreens.
-
-Packs can no longer have matching loading priorities.
-
-
 ## 4. Converting regular packs
 
 Packs that are in the default vanilla pack folders (resourcepacks and datapacks) will be listed on DependenciesScreens at the very bottom in their own section.
@@ -38,20 +38,11 @@ Packs that are in the default vanilla pack folders (resourcepacks and datapacks)
 Instead of edit & delete buttons, regular packs have one "convert" button which changes them into a Zipper pack with default values and the mode OPTIONAL_DISABLED. Clicking this first converts the pack (moves the local file into .zipper subdirectory), and then opens a DependencyEditScreen for the pack.
 
 
-## 5. Modpack resources
+## 5. Modpack resources icon
 
-Add a custom "modpack" pack in both the resourcepacks and the datapacks folders. This will be a resource/data pack that always loads above *everything* else and is always shown in the pack list above forced dependencies. This feature is already done, we're just moving where the pack is.
-
-The "modpack" pack is named "Modpack Resources" in-game, and is listed with a cobbled deepslate icon by default to complement the cobblestone icon of the "Mod Resources" packs. This icon is overridden if an icon.png file exists in the root directory (.minecraft). The pack's name is lang-driven, so you can change it to suit your modpack.
+Add a custom deepslate block icon for modpack resources. This icon is copied into the modpack resources pack folder if one is not already present. This means that modpack authors can override it with their own icon.
 
 
-## 6. "Add new pack" improvements
-
-Clicking the "add" button on a DependenciesScreen, rather than adding a new empty pack, will open a DependencyEditScreen for a new empty pack, which is added automatically.
-
-The add button is changed to be 20x20 and moved to the bottom-right of the screen into the bottom bar.
-
-
-## 7. Action safety
+## 6. Action safety
 
 Add a confirmation pop-up for clicking the "delete" button for dependencies on a DependenciesScreen.

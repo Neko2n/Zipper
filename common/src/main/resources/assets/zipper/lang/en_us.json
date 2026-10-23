@@ -8,6 +8,8 @@
     "zipper.gui.screen.config.main.production.tooltip": "Hides the title screen button.",
     "zipper.gui.screen.config.main.hide-forced": "Hide Forced Packs",
     "zipper.gui.screen.config.main.hide-forced.tooltip": "Hides forced resource and data packs from the selection menu.",
+    "zipper.gui.screen.config.main.hide-built-in": "Hide Built-In Packs",
+    "zipper.gui.screen.config.main.hide-built-in.tooltip": "Hides built-in resource and data packs from the selection menu.",
     "zipper.gui.screen.config.main.warn-enabled": "Warnings Enabled",
     "zipper.gui.screen.config.main.warn-enabled.tooltip": "Enables/disables the warning screen when packs could not be downloaded from the internet. Don't disable this unless you're okay with users skipping pack downloads.",
     "zipper.gui.screen.config.main.prompt-enabled": "Reload Prompt Enabled",
@@ -31,8 +33,8 @@
     "zipper.gui.screen.config.dependencies.edit.hosts.tooltip": "Website(s) to attempt to download this pack from if its file is not found.",
     "zipper.gui.screen.config.dependencies.edit.mode": "Loading Mode",
     "zipper.gui.screen.config.dependencies.edit.mode.tooltip": "How this pack should be loaded into the game.",
-    "zipper.gui.screen.config.dependencies.edit.mode.tooltip.forced": "The pack is forced enabled. Uses loading priority to determine order. Always loads below optional packs, regardless of priority.",
-    "zipper.gui.screen.config.dependencies.edit.mode.tooltip.optional-enabled": "The pack is enabled by default, but can be disabled. Uses loading priority to determine order.",
+    "zipper.gui.screen.config.dependencies.edit.mode.tooltip.forced": "The pack is forced enabled. Always loads below optional packs.",
+    "zipper.gui.screen.config.dependencies.edit.mode.tooltip.optional-enabled": "The pack is enabled by default, but can be disabled.",
     "zipper.gui.screen.config.dependencies.edit.mode.tooltip.optional-disabled": "The pack is disabled by default, but can be enabled.",
     "zipper.gui.screen.config.dependencies.edit.mode.tooltip.support": "The pack is not loaded, only downloaded to support the authors.",
     "zipper.gui.screen.config.dependencies.edit.button.back": "Apply",
@@ -56,5 +58,7 @@
     "zipper.gui.screen.downloaderror.message.not-found.2": "Please report this to the modpack author.",
     "zipper.gui.screen.downloaderror.causes": "Caused by:",
 
-    "zipper.gui.widget.input.ordered-list.add.narration": "Add new item"
+    "zipper.gui.widget.input.ordered-list.add.narration": "Add new item",
+
+    "zipper.modpack-resources.description": "Resources for the modpack"
 }

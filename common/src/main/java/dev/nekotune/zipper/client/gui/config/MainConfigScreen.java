@@ -42,6 +42,7 @@ public class MainConfigScreen extends AbstractConfigScreen {
         });
         MainSettings.PRODUCTION.appendTo(builder, this.font);
         MainSettings.HIDE_FORCED.appendTo(builder, this.font);
+        MainSettings.HIDE_BUILT_IN.appendTo(builder, this.font);
         MainSettings.WARN_ENABLED.appendTo(builder, this.font);
         MainSettings.PROMPT_ENABLED.appendTo(builder, this.font);
         MainSettings.DISABLE_COMPATIBILITY_WARNINGS.appendTo(builder, this.font);
@@ -57,6 +58,11 @@ public class MainConfigScreen extends AbstractConfigScreen {
         HIDE_FORCED(font -> {
             final var toggle = new ToggleInput.TextToggle(Config.INSTANCE.hideForced);
             toggle.setResponder(value -> Config.INSTANCE.hideForced = value);
+            return toggle;
+        }),
+        HIDE_BUILT_IN(font -> {
+            final var toggle = new ToggleInput.TextToggle(Config.INSTANCE.hideBuiltIn);
+            toggle.setResponder(value -> Config.INSTANCE.hideBuiltIn = value);
             return toggle;
         }),
         WARN_ENABLED(font -> {
