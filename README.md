@@ -38,6 +38,6 @@ Zipper seeks to provide functionality already made possible by mods like **Paxi*
 
 I've had personal gripes with how difficult it is to manage resource & data packs with these tools, so I made Zipper as a means of handling it all in one place.
 
-#### Notes
+=================================================
 
 No generative AI was directly used in the creation of this project. All made by me :)
