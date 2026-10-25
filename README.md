@@ -34,4 +34,8 @@ You can also configure packs to be downloaded in **support mode**, which will in
 
 =================================================
 
-No generative AI was directly used in the creation of this project. All made by me :)
+### AI Disclosure
+
+**No AI was used in the direct creation of any code, text, or other assets in this project.**
+
+I **do** use AI as a search engine / a general "how do I do this?" tool. I'm by no means a professional software developer (yet >:3), so it helps to have guidance on how to properly do things. I basically use AI like I used to use StackOverflow.
