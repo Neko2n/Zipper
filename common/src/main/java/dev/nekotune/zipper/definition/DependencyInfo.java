@@ -77,7 +77,7 @@ public record DependencyInfo(
                 default:
                     throw new UnsupportedOperationException();
             }
-            return Path.of(rootFolder, "modpack");
+            return Path.of(rootFolder, ".zipper");
         });
     }
 
