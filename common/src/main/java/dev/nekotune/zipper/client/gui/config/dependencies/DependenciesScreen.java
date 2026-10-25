@@ -36,7 +36,12 @@ import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 
-// TODO show vanilla packs and allow converting them into zipper packs
+// TODO display modpack resources at the top with two buttons:
+//  - a question mark button to show a popup explaining modpack resources
+//  - a folder button to open in your OS's explorer
+
+// TODO show vanilla & unregistered packs and allow converting them into zipper packs
+
 /**
  * Screen which shows a list of active dependencies.
  * Dependencies in the list may be edited with a button, opening

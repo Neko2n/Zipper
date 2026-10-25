@@ -16,6 +16,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 
+// TODO add clickable URL to the top of the settings list linking the docs
 public class MainConfigScreen extends AbstractConfigScreen {
 
     protected static final String KEY = AbstractConfigScreen.KEY + ".main";
