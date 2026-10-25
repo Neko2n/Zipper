@@ -16,7 +16,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 
-// TODO add clickable URL to the top of the settings list linking the docs
+// TODO add ? button to the bottom left linking the docs
+// link: https://github.com/Neko2n/Zipper/wiki
 public class MainConfigScreen extends AbstractConfigScreen {
 
     protected static final String KEY = AbstractConfigScreen.KEY + ".main";
