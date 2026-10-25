@@ -36,12 +36,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.packs.PackType;
-
-// TODO display modpack resources at the top with two buttons:
-//  - a question mark button to show a popup explaining modpack resources
-//  - a folder button to open in your OS's explorer
 
 // TODO show vanilla & unregistered packs and allow converting them into zipper packs
 
@@ -589,12 +584,12 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
                 final LinkedList<Button> buttons = new LinkedList<>();
 
-                // Button which displays a help popup window
-                final Button helpButton = Button.builder(Component.literal("?"),
-                        (final Button button) -> this.screen.minecraft
-                                .setScreen(new HelpButtonPopupScreen(this.screen)))
+                // Button which displays a help message on hover
+                final Button helpButton = Button.builder(Component.literal("?"), $ -> {})
                         .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
                         .build();
+                final Tooltip helpTooltip = Tooltip.create(Component.translatable(KEY + ".modpack-resources.help"));
+                helpButton.setTooltip(helpTooltip);
 
                 buttons.add(helpButton);
                 return buttons;
@@ -603,37 +598,6 @@ public class DependenciesScreen extends AbstractConfigScreen {
             @Override
             public boolean alwaysShowButtons() {
                 return false;
-            }
-
-            /**
-             * Screen that shows when you click the "?" button next to the modpack resources
-             * listing
-             */
-            public static final class HelpButtonPopupScreen extends AbstractPopupScreen<DependenciesScreen> {
-
-                protected HelpButtonPopupScreen(final DependenciesScreen covering) {
-                    super(covering, 400, 100, Component.empty());
-                }
-
-                @Override
-                public void renderContent(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
-                        final float partialTick) {
-                    final int centerX = this.marginX() + (this.getPopupWidth() / 2);
-                    final int centerY = this.marginY() + (this.getPopupHeight() / 2);
-                    final int textColor = 0xFFFFFFFF;
-                    final int padding = 20;
-
-                    // TODO write help text
-
-                    // Localized explanation text
-                    final Component explanation = Component.translatable(KEY + ".popup.download-help");
-                    guiGraphics.drawCenteredString(this.font, explanation, centerX, centerY - (padding / 2), textColor);
-
-                    // URL example for where to find project slugs
-                    final Component urlExample = Component.literal("project-slug")
-                            .withStyle(ChatFormatting.BOLD, ChatFormatting.YELLOW);
-                    guiGraphics.drawCenteredString(this.font, urlExample, centerX, centerY + (padding / 2), textColor);
-                }
             }
         }
     }

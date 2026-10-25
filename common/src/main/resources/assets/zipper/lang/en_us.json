@@ -29,6 +29,7 @@
     "zipper.gui.screen.config.dependencies.delete.popup.button.confirm": "Delete",
     "zipper.gui.screen.config.dependencies.delete.popup.button.back": "Back",
     "zipper.gui.screen.config.dependencies.modpack-resources.open-folder": "Open folder",
+    "zipper.gui.screen.config.dependencies.modpack-resources.help": "Pack for custom modpack assets which should always be loaded. Loads above FORCED and built-in packs, but below optional packs.",
     "zipper.gui.screen.config.dependencies.item.narration": "Pack",
     "zipper.gui.screen.config.dependencies.add.narration": "Add new pack",
     "zipper.gui.screen.config.dependencies.button.back": "Back",
