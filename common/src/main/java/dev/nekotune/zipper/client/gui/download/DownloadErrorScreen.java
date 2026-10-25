@@ -1,4 +1,4 @@
-package dev.nekotune.zipper.client.gui;
+package dev.nekotune.zipper.client.gui.download;
 
 import java.util.List;
 import java.util.Optional;

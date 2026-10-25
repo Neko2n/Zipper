@@ -15,10 +15,10 @@ import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.DownloadManager;
 import dev.nekotune.zipper.DownloadManager.DownloadResult;
-import dev.nekotune.zipper.client.gui.DownloadErrorScreen;
-import dev.nekotune.zipper.client.gui.ReloadPromptScreen;
 import dev.nekotune.zipper.client.gui.config.ConfigButtonHandler;
+import dev.nekotune.zipper.client.gui.download.DownloadErrorScreen;
 import dev.nekotune.zipper.client.gui.download.DownloadWaitOverlay;
+import dev.nekotune.zipper.client.gui.download.ReloadPromptScreen;
 import dev.nekotune.zipper.mixin.minecraft.client.ScreenAccessor;
 import dev.nekotune.zipper.platform.PlatformEvents;
 

@@ -1,4 +1,4 @@
-package dev.nekotune.zipper.client.gui;
+package dev.nekotune.zipper.client.gui.download;
 
 import dev.nekotune.zipper.Resources;
 import dev.nekotune.zipper.Zipper;

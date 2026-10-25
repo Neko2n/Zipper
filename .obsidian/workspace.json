@@ -183,6 +183,8 @@
   },
   "active": "73d9c8ff0d76fd6d",
   "lastOpenFiles": [
+    "common/src/main/java/dev/nekotune/zipper/client/gui/download/ReloadPromptScreen.java",
+    "common/src/main/java/dev/nekotune/zipper/client/gui/download/DownloadErrorScreen.java",
     "neoforge/run/logs/2026-10-24-1.log.gz",
     "common/build/classes/java/main/dev/nekotune/zipper/client/gui/config/MainConfigScreen.class",
     "neoforge/run/logs/2026-10-23-58.log.gz",
@@ -192,8 +194,6 @@
     "neoforge/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependenciesScreen$Entry$Sprites.class",
     "common/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependencyEditScreen$HelpButtonPopupScreen.class",
     "common/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependencyEditScreen$SettingsWidgets$HostsSettings$HostWidget.class",
-    "common/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependenciesScreen.class",
-    "common/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependenciesScreen$Entry$PriorityButtons.class",
     "dev/todo/Blacklist.md",
     "dev/todo/Local Dependencies.md",
     "neoforge/run/saves/Test/icon.png",
