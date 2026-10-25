@@ -20,7 +20,7 @@ Loading priority will instead be handled by packs' ordering in DependenciesScree
 Packs can no longer have matching loading priorities.
 
 
-## 3. List packs separately by mode
+## 3. ~~List packs separately by mode~~
 
 Packs listed on DependenciesScreens will be separated into "categories" depending on their mode, with mode categories sorted by their loading order.
 
@@ -38,6 +38,6 @@ Packs that are in the default vanilla pack folders (resourcepacks and datapacks)
 Instead of edit & delete buttons, regular packs have one "convert" button which changes them into a Zipper pack with default values and the mode OPTIONAL_DISABLED. Clicking this first converts the pack (moves the local file into .zipper subdirectory), and then opens a DependencyEditScreen for the pack.
 
 
-## 5. Action safety
+## 5. ~~Action safety~~
 
 Add a confirmation pop-up for clicking the "delete" button for dependencies on a DependenciesScreen.

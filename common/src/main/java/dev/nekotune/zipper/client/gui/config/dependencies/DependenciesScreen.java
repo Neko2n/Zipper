@@ -36,7 +36,6 @@ import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 
-// TODO separate packs into sections based on their mode
 // TODO show vanilla packs and allow converting them into zipper packs
 /**
  * Screen which shows a list of active dependencies.
@@ -142,19 +141,46 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
     @Override
     protected void populateSettings(final SettingsList.SettingsContent.Builder builder) {
-        final LinkedList<DependencyPack> indexable = new LinkedList<>(this.modifiedPacks);
-        Optional<Entry> above = Optional.empty();
-        Optional<Entry> below = Optional.empty();
-        for (int i = 0; i < indexable.size(); i++) {
-            final Entry entry = below.orElse(new Entry(this, indexable.get(i)));
-            if (i + 1 < indexable.size()) {
-                final DependencyPack nextPack = indexable.get(i + 1);
-                below = Optional.of(new Entry(this, nextPack));
-                entry.below = below;
+
+        // List packs separated by mode
+        final EnumMap<DependencyInfo.Mode, LinkedList<DependencyPack>> sortedPacks = new EnumMap<>(
+                DependencyInfo.Mode.class);
+        this.modifiedPacks.forEach((final DependencyPack pack) -> {
+            sortedPacks.computeIfAbsent(pack.info.mode(), $ -> new LinkedList<>()).add(pack);
+        });
+        populateSection(builder, sortedPacks.getOrDefault(DependencyInfo.Mode.FORCED, new LinkedList<>()),
+                true, Component.translatable(KEY + ".section.forced.title"));
+        populateSection(builder, sortedPacks.getOrDefault(DependencyInfo.Mode.OPTIONAL_ENABLED, new LinkedList<>()),
+                true, Component.translatable(KEY + ".section.optional-enabled.title"));
+        populateSection(builder, sortedPacks.getOrDefault(DependencyInfo.Mode.OPTIONAL_DISABLED, new LinkedList<>()),
+                false, Component.translatable(KEY + ".section.optional-disabled.title"));
+        populateSection(builder, sortedPacks.getOrDefault(DependencyInfo.Mode.SUPPORT, new LinkedList<>()),
+                false, Component.translatable(KEY + ".section.support.title"));
+    }
+
+    private void populateSection(final SettingsList.SettingsContent.Builder builder,
+            final LinkedList<DependencyPack> packs, final boolean canMove, final Component title) {
+        if (packs.size() == 0)
+            return;
+        builder.addElement(new StringWidget(title, this.font));
+        if (canMove) {
+            Optional<Entry> above = Optional.empty();
+            Optional<Entry> below = Optional.empty();
+            for (int i = 0; i < packs.size(); i++) {
+                final Entry entry = below.orElse(new Entry(this, packs.get(i)));
+                if (i + 1 < packs.size()) {
+                    final DependencyPack nextPack = packs.get(i + 1);
+                    below = Optional.of(new Entry(this, nextPack));
+                    entry.below = below;
+                }
+                entry.above = above;
+                above = Optional.of(entry);
+                builder.addElement(entry);
             }
-            entry.above = above;
-            above = Optional.of(entry);
-            builder.addElement(entry);
+        } else {
+            for (final DependencyPack pack : packs) {
+                builder.addElement(new Entry(this, pack));
+            }
         }
     }
 
@@ -331,17 +357,21 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 this.deleteButton.render(guiGraphics, mouseX, mouseY, partialTick);
 
                 // Render priority shifting arrows over the packWidget icon
-                final int iconX = this.packWidget.getX();
-                final int iconY = this.packWidget.getY();
-                final int iconSize = this.packWidget.getIconSize();
-                guiGraphics.fill(iconX, iconY,
-                        iconX + iconSize, iconY + iconSize,
-                        HOVER_OVERLAY);
-                if (this.above.isPresent()) {
-                    this.priorityButtons.up().render(guiGraphics, mouseX, mouseY, partialTick);
-                }
-                if (this.below.isPresent()) {
-                    this.priorityButtons.down().render(guiGraphics, mouseX, mouseY, partialTick);
+                final boolean hasAbove = this.above.isPresent();
+                final boolean hasBelow = this.below.isPresent();
+                if (hasAbove || hasBelow) {
+                    final int iconX = this.packWidget.getX();
+                    final int iconY = this.packWidget.getY();
+                    final int iconSize = this.packWidget.getIconSize();
+                    guiGraphics.fill(iconX, iconY,
+                            iconX + iconSize, iconY + iconSize,
+                            HOVER_OVERLAY);
+                    if (hasAbove) {
+                        this.priorityButtons.up().render(guiGraphics, mouseX, mouseY, partialTick);
+                    }
+                    if (hasBelow) {
+                        this.priorityButtons.down().render(guiGraphics, mouseX, mouseY, partialTick);
+                    }
                 }
             }
         }
@@ -418,15 +448,17 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 this.font = covering.minecraft.font;
                 this.questionText = new StringWidget(Component.translatable(KEY + ".delete.popup.question"), this.font);
                 this.warningText = new StringWidget(Component.translatable(KEY + ".delete.popup.warning"), this.font);
-                this.confirmButton = Button.builder(Component.translatable(KEY + ".delete.popup.button.confirm"), pressConfirm)
+                this.confirmButton = Button
+                        .builder(Component.translatable(KEY + ".delete.popup.button.confirm"), pressConfirm)
                         .size(Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT)
                         .build();
-                this.backButton = Button.builder(Component.translatable(KEY + ".delete.popup.button.back"), $ -> this.onClose())
+                this.backButton = Button
+                        .builder(Component.translatable(KEY + ".delete.popup.button.back"), $ -> this.onClose())
                         .size(Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT)
                         .build();
             }
 
-            @Override 
+            @Override
             public void tick() {
                 this.elapsed++;
                 this.confirmButton.active = this.elapsed >= CONFIRM_CD_TICKS;
@@ -450,7 +482,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 layout.setPosition(this.marginX(), this.marginY());
                 layout.setMinDimensions(this.getPopupWidth(), this.getPopupHeight());
                 layout.arrangeElements();
-                
+
                 this.confirmButton.active = false;
                 this.addWidget(this.questionText);
                 this.addWidget(this.warningText);
@@ -474,11 +506,11 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 this.warningText.render(guiGraphics, mouseX, mouseY, partialTick);
                 this.confirmButton.render(guiGraphics, mouseX, mouseY, partialTick);
                 this.backButton.render(guiGraphics, mouseX, mouseY, partialTick);
-                
+
                 // Confirm button cooldown overlay
-                final float alpha = ((float)this.elapsed) / ((float)CONFIRM_CD_TICKS);
+                final float alpha = ((float) this.elapsed) / ((float) CONFIRM_CD_TICKS);
                 if (alpha < 1f) {
-                    final int fillWidth = this.confirmButton.getX() + (int)(this.confirmButton.getWidth() * alpha);
+                    final int fillWidth = this.confirmButton.getX() + (int) (this.confirmButton.getWidth() * alpha);
                     guiGraphics.fill(this.confirmButton.getX(), this.confirmButton.getY(),
                             fillWidth, this.confirmButton.getY() + this.confirmButton.getHeight(),
                             0x55FFFFFF);

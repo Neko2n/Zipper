@@ -183,18 +183,19 @@
   },
   "active": "73d9c8ff0d76fd6d",
   "lastOpenFiles": [
+    "neoforge/run/logs/2026-10-24-1.log.gz",
+    "common/build/classes/java/main/dev/nekotune/zipper/client/gui/config/MainConfigScreen.class",
+    "neoforge/run/logs/2026-10-23-58.log.gz",
+    "neoforge/run/logs/2026-10-23-57.log.gz",
+    "neoforge/build/classes/java/main/dev/nekotune/zipper/client/gui/config/MainConfigScreen.class",
+    "neoforge/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependenciesScreen$Entry$TransferButton.class",
+    "neoforge/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependenciesScreen$Entry$Sprites.class",
+    "common/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependencyEditScreen$HelpButtonPopupScreen.class",
+    "common/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependencyEditScreen$SettingsWidgets$HostsSettings$HostWidget.class",
+    "common/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependenciesScreen.class",
+    "common/build/classes/java/main/dev/nekotune/zipper/client/gui/config/dependencies/DependenciesScreen$Entry$PriorityButtons.class",
     "dev/todo/Blacklist.md",
     "dev/todo/Local Dependencies.md",
-    "common/src/main/java/dev/nekotune/zipper/server/ServerZipper.java",
-    "common/src/main/java/dev/nekotune/zipper/client/ClientZipper.java",
-    "common/src/main/java/dev/nekotune/zipper/Zipper.java",
-    "fabric/src/main/java/dev/nekotune/zipper/client/ClientFabricLoader.java",
-    "fabric/src/main/java/dev/nekotune/zipper/FabricLoader.java",
-    "forge/src/main/java/dev/nekotune/zipper/ForgeLoader.java",
-    "neoforge/src/main/java/dev/nekotune/zipper/client/ClientNeoForgeLoader.java",
-    "neoforge/src/main/java/dev/nekotune/zipper/NeoForgeLoader.java",
-    "neoforge/src/main/java/dev/nekotune/zipper/NeoForge.java",
-    "neoforge/src/main/java/dev/nekotune/zipper/client/ClientNeoForge.java",
     "neoforge/run/saves/Test/icon.png",
     "todo/Data Pack Loading.md",
     "dev/todo/done/Web Fetches.md",
@@ -227,7 +228,6 @@
     "frontend/fabric/build/docs/javadoc/legal/jquery.md",
     "frontend/common/build/docs/javadoc/legal/jqueryUI.md",
     "frontend/common/build/docs/javadoc/legal/jquery.md",
-    "frontend/README.md",
-    "todo/done/Web Fetches.md"
+    "frontend/README.md"
   ]
 }
