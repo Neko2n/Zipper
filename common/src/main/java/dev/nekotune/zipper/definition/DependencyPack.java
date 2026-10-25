@@ -135,6 +135,13 @@ public class DependencyPack extends Pack {
         }
 
         /**
+         * @return Folder path which contains the assets/data for this pack.
+         */
+        public Path getPath() {
+            return PATHS.get(this.info.type());
+        }
+
+        /**
          * Builds a dependency pack from the local modpack resources folder.
          * Caches the result, so future calls will return an existing object.
          * 

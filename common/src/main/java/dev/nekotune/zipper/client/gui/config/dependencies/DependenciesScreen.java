@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.Resources;
+import dev.nekotune.zipper.Zipper;
 import dev.nekotune.zipper.client.gui.AbstractPopupScreen;
 import dev.nekotune.zipper.client.gui.config.AbstractConfigScreen;
 import dev.nekotune.zipper.client.gui.widgets.PackWidget;
@@ -18,6 +19,7 @@ import dev.nekotune.zipper.client.gui.widgets.container.SettingsList;
 import dev.nekotune.zipper.definition.DependencyInfo;
 import dev.nekotune.zipper.definition.DependencyPack;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -34,6 +36,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.packs.PackType;
 
 // TODO display modpack resources at the top with two buttons:
@@ -147,6 +150,25 @@ public class DependenciesScreen extends AbstractConfigScreen {
     @Override
     protected void populateSettings(final SettingsList.SettingsContent.Builder builder) {
 
+        // Modpack resources listing with help & "open folder" buttons
+        try {
+            final DependencyPack.ModpackResources pack = DependencyPack.ModpackResources.get(this.packType);
+            builder.addElement(new Entry.ModpackResourcesEntry(this, pack));
+
+            // Button which opens the pack folder for the modpack resources pack
+            final Button folderButton = Button.builder(
+                    /** Component copied from {@link PackSelectionScreen} */
+                    Component.translatable("pack.openFolder"),
+                    (final Button button) -> Util.getPlatform().openPath(pack.getPath()))
+                    .size(Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT)
+                    .build();
+            /** Component copied from {@link PackSelectionScreen} */
+            folderButton.setTooltip(Tooltip.create(Component.translatable("pack.folderInfo")));
+            builder.addElement(folderButton);
+        } catch (final IOException e) {
+            Zipper.LOG.error("Modpack resources could not be read. This should never happen.");
+        }
+
         // List packs separated by mode
         final EnumMap<DependencyInfo.Mode, LinkedList<DependencyPack>> sortedPacks = new EnumMap<>(
                 DependencyInfo.Mode.class);
@@ -169,13 +191,13 @@ public class DependenciesScreen extends AbstractConfigScreen {
             return;
         builder.addElement(new StringWidget(title, this.font));
         if (canMove) {
-            Optional<Entry> above = Optional.empty();
-            Optional<Entry> below = Optional.empty();
+            Optional<Entry<?>> above = Optional.empty();
+            Optional<Entry<?>> below = Optional.empty();
             for (int i = 0; i < packs.size(); i++) {
-                final Entry entry = below.orElse(new Entry(this, packs.get(i)));
+                final Entry<?> entry = below.orElse(new Entry.DependencyEntry(this, packs.get(i)));
                 if (i + 1 < packs.size()) {
                     final DependencyPack nextPack = packs.get(i + 1);
-                    below = Optional.of(new Entry(this, nextPack));
+                    below = Optional.of(new Entry.DependencyEntry(this, nextPack));
                     entry.below = below;
                 }
                 entry.above = above;
@@ -184,7 +206,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
             }
         } else {
             for (final DependencyPack pack : packs) {
-                builder.addElement(new Entry(this, pack));
+                builder.addElement(new Entry.DependencyEntry(this, pack));
             }
         }
     }
@@ -205,7 +227,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
         return Component.translatableWithFallback(KEY + ".button.back", "Apply");
     }
 
-    protected static class Entry extends AbstractContainerWidget {
+    protected static sealed abstract class Entry<T extends DependencyPack> extends AbstractContainerWidget {
 
         /** Copied from {@link TransferableSelectionList} */
         private static final int HOVER_OVERLAY = 0xA0909090;
@@ -219,46 +241,16 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
         protected final ZipperPackWidget packWidget;
         protected final PriorityButtons priorityButtons;
-        protected final Button editButton;
-        protected final Button deleteButton;
+        protected final LinkedList<Button> interactionButtons;
         public final DependenciesScreen screen;
-        public final DependencyPack pack;
-        public Optional<Entry> above = Optional.empty();
-        public Optional<Entry> below = Optional.empty();
+        public final T pack;
+        public Optional<Entry<?>> above = Optional.empty();
+        public Optional<Entry<?>> below = Optional.empty();
 
-        public Entry(final DependenciesScreen screen, final DependencyPack pack) {
+        public Entry(final DependenciesScreen screen, final T pack) {
             super(0, 0, screen.getInnerWidth() - 4, 32, pack.getTitle());
             this.screen = screen;
             this.pack = pack;
-
-            // Button which modifies the dependency's information
-            final Resources.Sprite editIcon = Resources.Gui.Sprites.Icons.EDIT;
-            this.editButton = SpriteIconButton.builder(Component.empty(),
-                    (final Button button) -> this.screen.editDependency(pack),
-                    true)
-                    .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
-                    .sprite(editIcon.location(), editIcon.width(), editIcon.height())
-                    .build();
-            this.editButton.setTooltip(Tooltip.create(
-                    Component.translatableWithFallback(KEY + ".edit.tooltip",
-                            "Edit dependency")));
-
-            // Button which deletes the dependency from the list
-            final Resources.Sprite deleteIcon = Resources.Gui.Sprites.Icons.DELETE;
-            this.deleteButton = SpriteIconButton.builder(
-                    Component.empty(),
-                    (final Button button) -> {
-
-                        // On click, re-build the scroll list with this dependency removed.
-                        this.screen.minecraft.setScreen(new DeleteConfirmationScreen(this.screen, this));
-                    },
-                    true)
-                    .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
-                    .sprite(deleteIcon.location(), deleteIcon.width(), deleteIcon.height())
-                    .build();
-            this.deleteButton.setTooltip(Tooltip.create(
-                    Component.translatableWithFallback(KEY + ".delete.tooltip",
-                            "Delete dependency").withStyle(ChatFormatting.RED)));
 
             // Display information about the pack (icon, title, description)
             this.packWidget = new ZipperPackWidget(this);
@@ -273,8 +265,14 @@ public class DependenciesScreen extends AbstractConfigScreen {
                     Sprites.DECREASE_PRIORITY.height() / 2, $ -> this.below.ifPresent(this::swapWith));
             this.priorityButtons = new PriorityButtons(upButton, downButton);
 
+            this.interactionButtons = this.constructInteractionButtons();
+
             this.arrangeElements();
         }
+
+        public abstract LinkedList<Button> constructInteractionButtons();
+
+        public abstract boolean alwaysShowButtons();
 
         public void arrangeElements() {
             final FrameLayout layout = new FrameLayout();
@@ -283,10 +281,10 @@ public class DependenciesScreen extends AbstractConfigScreen {
             layout.addChild(this.packWidget, settings -> settings.alignHorizontallyLeft().alignVerticallyMiddle());
             final LinearLayout rightGroup = LinearLayout.horizontal();
             rightGroup.addChild(SpacerElement.width(4));
-            rightGroup.addChild(this.editButton, settings -> settings.alignVerticallyMiddle());
-            rightGroup.addChild(SpacerElement.width(4));
-            rightGroup.addChild(this.deleteButton, settings -> settings.alignVerticallyMiddle());
-            rightGroup.addChild(SpacerElement.width(4));
+            for (final Button button : this.interactionButtons) {
+                rightGroup.addChild(button, settings -> settings.alignVerticallyMiddle());
+                rightGroup.addChild(SpacerElement.width(4));
+            }
             rightGroup.arrangeElements();
             layout.addChild(rightGroup, settings -> settings.alignHorizontallyRight().alignVerticallyMiddle());
             this.packWidget.setWidth(this.getWidth() - rightGroup.getWidth());
@@ -307,7 +305,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
          * 
          * @param swapWith The entry to swap loading priorities (positions) with.
          */
-        public void swapWith(final Entry swapWith) {
+        public void swapWith(final Entry<?> swapWith) {
             final var backup = new LinkedHashSet<>(this.screen.modifiedPacks);
             this.screen.modifiedPacks.clear();
             for (final DependencyPack existing : backup) {
@@ -342,8 +340,9 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
         @Override
         public List<? extends GuiEventListener> children() {
-            final List<AbstractWidget> widgets = new LinkedList<>(
-                    List.of(this.editButton, this.deleteButton, packWidget));
+            final LinkedList<AbstractWidget> widgets = new LinkedList<>();
+            widgets.addAll(this.interactionButtons);
+            widgets.add(this.packWidget);
             if (this.above.isPresent()) {
                 widgets.addFirst(this.priorityButtons.up());
             }
@@ -357,9 +356,12 @@ public class DependenciesScreen extends AbstractConfigScreen {
         protected final void renderWidget(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
                 final float partialTick) {
             this.packWidget.render(guiGraphics, mouseX, mouseY, partialTick);
+            if (this.isHovered() || this.alwaysShowButtons()) {
+                for (final Button button : this.interactionButtons) {
+                    button.render(guiGraphics, mouseX, mouseY, partialTick);
+                }
+            }
             if (this.isHovered()) {
-                this.editButton.render(guiGraphics, mouseX, mouseY, partialTick);
-                this.deleteButton.render(guiGraphics, mouseX, mouseY, partialTick);
 
                 // Render priority shifting arrows over the packWidget icon
                 final boolean hasAbove = this.above.isPresent();
@@ -422,7 +424,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
          */
         public static class ZipperPackWidget extends PackWidget {
 
-            public ZipperPackWidget(final Entry entry) {
+            public ZipperPackWidget(final Entry<?> entry) {
                 super(entry.screen.minecraft, 0, 0, 0, entry.pack);
             }
 
@@ -432,93 +434,205 @@ public class DependenciesScreen extends AbstractConfigScreen {
             }
         }
 
-        public static final class DeleteConfirmationScreen extends AbstractPopupScreen<DependenciesScreen> {
-            private static final int CONFIRM_CD_TICKS = 30;
+        public static final class DependencyEntry extends Entry<DependencyPack> {
 
-            private boolean confirmed = false;
-            private final Entry entry;
-            private int elapsed = 0;
-            private final StringWidget questionText;
-            private final StringWidget warningText;
-            private final Button confirmButton;
-            private final Button backButton;
-            private final Button.OnPress pressConfirm = $ -> {
-                this.confirmed = true;
-                this.onClose();
-            };
+            public DependencyEntry(final DependenciesScreen screen, final DependencyPack pack) {
+                super(screen, pack);
+            }
 
-            protected DeleteConfirmationScreen(final DependenciesScreen covering, final Entry entry) {
-                super(covering, 340, 100 + Button.DEFAULT_HEIGHT, Component.empty());
-                this.entry = entry;
-                this.font = covering.minecraft.font;
-                this.questionText = new StringWidget(Component.translatable(KEY + ".delete.popup.question"), this.font);
-                this.warningText = new StringWidget(Component.translatable(KEY + ".delete.popup.warning"), this.font);
-                this.confirmButton = Button
-                        .builder(Component.translatable(KEY + ".delete.popup.button.confirm"), pressConfirm)
-                        .size(Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT)
+            @Override
+            public LinkedList<Button> constructInteractionButtons() {
+                final LinkedList<Button> buttons = new LinkedList<>();
+
+                // Button which modifies the dependency's information
+                final Resources.Sprite editIcon = Resources.Gui.Sprites.Icons.EDIT;
+                final Button editButton = SpriteIconButton.builder(Component.empty(),
+                        (final Button button) -> this.screen.editDependency(pack),
+                        true)
+                        .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
+                        .sprite(editIcon.location(), editIcon.width(), editIcon.height())
                         .build();
-                this.backButton = Button
-                        .builder(Component.translatable(KEY + ".delete.popup.button.back"), $ -> this.onClose())
-                        .size(Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT)
+                editButton.setTooltip(Tooltip.create(
+                        Component.translatableWithFallback(KEY + ".edit.tooltip",
+                                "Edit dependency")));
+
+                // Button which deletes the dependency from the list
+                final Resources.Sprite deleteIcon = Resources.Gui.Sprites.Icons.DELETE;
+                final Button deleteButton = SpriteIconButton.builder(
+                        Component.empty(),
+                        (final Button button) -> {
+
+                            // On click, re-build the scroll list with this dependency removed.
+                            this.screen.minecraft.setScreen(new DeleteConfirmationScreen(this.screen, this));
+                        },
+                        true)
+                        .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
+                        .sprite(deleteIcon.location(), deleteIcon.width(), deleteIcon.height())
                         .build();
+                deleteButton.setTooltip(Tooltip.create(
+                        Component.translatableWithFallback(KEY + ".delete.tooltip",
+                                "Delete dependency").withStyle(ChatFormatting.RED)));
+
+                buttons.add(editButton);
+                buttons.add(deleteButton);
+                return buttons;
             }
 
             @Override
-            public void tick() {
-                this.elapsed++;
-                this.confirmButton.active = this.elapsed >= CONFIRM_CD_TICKS;
+            public boolean alwaysShowButtons() {
+                return false;
             }
 
-            @Override
-            public void init() {
-                super.init();
-                final FrameLayout layout = new FrameLayout();
-                final LinearLayout column = LinearLayout.vertical();
-                column.addChild(this.questionText, settings -> settings.alignHorizontallyCenter());
-                column.addChild(SpacerElement.height(8));
-                column.addChild(this.warningText, settings -> settings.alignHorizontallyCenter());
-                column.addChild(SpacerElement.height(Button.DEFAULT_HEIGHT));
-                final LinearLayout buttons = LinearLayout.horizontal();
-                buttons.addChild(this.backButton);
-                buttons.addChild(SpacerElement.width(4));
-                buttons.addChild(this.confirmButton);
-                column.addChild(buttons, settings -> settings.alignHorizontallyCenter());
-                layout.addChild(column, settings -> settings.alignHorizontallyCenter().alignVerticallyMiddle());
-                layout.setPosition(this.marginX(), this.marginY());
-                layout.setMinDimensions(this.getPopupWidth(), this.getPopupHeight());
-                layout.arrangeElements();
+            public static final class DeleteConfirmationScreen extends AbstractPopupScreen<DependenciesScreen> {
+                private static final int CONFIRM_CD_TICKS = 30;
 
-                this.confirmButton.active = false;
-                this.addWidget(this.questionText);
-                this.addWidget(this.warningText);
-                this.addWidget(this.backButton);
-                this.addWidget(this.confirmButton);
-            }
+                private boolean confirmed = false;
+                private final Entry.DependencyEntry entry;
+                private int elapsed = 0;
+                private final StringWidget questionText;
+                private final StringWidget warningText;
+                private final Button confirmButton;
+                private final Button backButton;
+                private final Button.OnPress pressConfirm = $ -> {
+                    this.confirmed = true;
+                    this.onClose();
+                };
 
-            @Override
-            public void onClose() {
-                super.onClose();
-                if (this.confirmed) {
-                    this.entry.screen.modifiedPacks.remove(this.entry.pack);
-                    this.entry.screen.refresh();
+                protected DeleteConfirmationScreen(final DependenciesScreen covering,
+                        final Entry.DependencyEntry entry) {
+                    super(covering, 340, 100 + Button.DEFAULT_HEIGHT, Component.empty());
+                    this.entry = entry;
+                    this.font = covering.minecraft.font;
+                    this.questionText = new StringWidget(Component.translatable(KEY + ".delete.popup.question"),
+                            this.font);
+                    this.warningText = new StringWidget(Component.translatable(KEY + ".delete.popup.warning"),
+                            this.font);
+                    this.confirmButton = Button
+                            .builder(Component.translatable(KEY + ".delete.popup.button.confirm"), pressConfirm)
+                            .size(Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT)
+                            .build();
+                    this.backButton = Button
+                            .builder(Component.translatable(KEY + ".delete.popup.button.back"), $ -> this.onClose())
+                            .size(Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT)
+                            .build();
+                }
+
+                @Override
+                public void tick() {
+                    this.elapsed++;
+                    this.confirmButton.active = this.elapsed >= CONFIRM_CD_TICKS;
+                }
+
+                @Override
+                public void init() {
+                    super.init();
+                    final FrameLayout layout = new FrameLayout();
+                    final LinearLayout column = LinearLayout.vertical();
+                    column.addChild(this.questionText, settings -> settings.alignHorizontallyCenter());
+                    column.addChild(SpacerElement.height(8));
+                    column.addChild(this.warningText, settings -> settings.alignHorizontallyCenter());
+                    column.addChild(SpacerElement.height(Button.DEFAULT_HEIGHT));
+                    final LinearLayout buttons = LinearLayout.horizontal();
+                    buttons.addChild(this.backButton);
+                    buttons.addChild(SpacerElement.width(4));
+                    buttons.addChild(this.confirmButton);
+                    column.addChild(buttons, settings -> settings.alignHorizontallyCenter());
+                    layout.addChild(column, settings -> settings.alignHorizontallyCenter().alignVerticallyMiddle());
+                    layout.setPosition(this.marginX(), this.marginY());
+                    layout.setMinDimensions(this.getPopupWidth(), this.getPopupHeight());
+                    layout.arrangeElements();
+
+                    this.confirmButton.active = false;
+                    this.addWidget(this.questionText);
+                    this.addWidget(this.warningText);
+                    this.addWidget(this.backButton);
+                    this.addWidget(this.confirmButton);
+                }
+
+                @Override
+                public void onClose() {
+                    super.onClose();
+                    if (this.confirmed) {
+                        this.entry.screen.modifiedPacks.remove(this.entry.pack);
+                        this.entry.screen.refresh();
+                    }
+                }
+
+                @Override
+                public void renderContent(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+                        final float partialTick) {
+                    this.questionText.render(guiGraphics, mouseX, mouseY, partialTick);
+                    this.warningText.render(guiGraphics, mouseX, mouseY, partialTick);
+                    this.confirmButton.render(guiGraphics, mouseX, mouseY, partialTick);
+                    this.backButton.render(guiGraphics, mouseX, mouseY, partialTick);
+
+                    // Confirm button cooldown overlay
+                    final float alpha = ((float) this.elapsed) / ((float) CONFIRM_CD_TICKS);
+                    if (alpha < 1f) {
+                        final int fillWidth = this.confirmButton.getX() + (int) (this.confirmButton.getWidth() * alpha);
+                        guiGraphics.fill(this.confirmButton.getX(), this.confirmButton.getY(),
+                                fillWidth, this.confirmButton.getY() + this.confirmButton.getHeight(),
+                                0x55FFFFFF);
+                    }
                 }
             }
+        }
+
+        public static final class ModpackResourcesEntry extends Entry<DependencyPack.ModpackResources> {
+
+            public ModpackResourcesEntry(final DependenciesScreen screen, final DependencyPack.ModpackResources pack) {
+                super(screen, pack);
+            }
 
             @Override
-            public void renderContent(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
-                    final float partialTick) {
-                this.questionText.render(guiGraphics, mouseX, mouseY, partialTick);
-                this.warningText.render(guiGraphics, mouseX, mouseY, partialTick);
-                this.confirmButton.render(guiGraphics, mouseX, mouseY, partialTick);
-                this.backButton.render(guiGraphics, mouseX, mouseY, partialTick);
+            public LinkedList<Button> constructInteractionButtons() {
 
-                // Confirm button cooldown overlay
-                final float alpha = ((float) this.elapsed) / ((float) CONFIRM_CD_TICKS);
-                if (alpha < 1f) {
-                    final int fillWidth = this.confirmButton.getX() + (int) (this.confirmButton.getWidth() * alpha);
-                    guiGraphics.fill(this.confirmButton.getX(), this.confirmButton.getY(),
-                            fillWidth, this.confirmButton.getY() + this.confirmButton.getHeight(),
-                            0x55FFFFFF);
+                final LinkedList<Button> buttons = new LinkedList<>();
+
+                // Button which displays a help popup window
+                final Button helpButton = Button.builder(Component.literal("?"),
+                        (final Button button) -> this.screen.minecraft
+                                .setScreen(new HelpButtonPopupScreen(this.screen)))
+                        .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
+                        .build();
+
+                buttons.add(helpButton);
+                return buttons;
+            }
+
+            @Override
+            public boolean alwaysShowButtons() {
+                return false;
+            }
+
+            /**
+             * Screen that shows when you click the "?" button next to the modpack resources
+             * listing
+             */
+            public static final class HelpButtonPopupScreen extends AbstractPopupScreen<DependenciesScreen> {
+
+                protected HelpButtonPopupScreen(final DependenciesScreen covering) {
+                    super(covering, 400, 100, Component.empty());
+                }
+
+                @Override
+                public void renderContent(final GuiGraphics guiGraphics, final int mouseX, final int mouseY,
+                        final float partialTick) {
+                    final int centerX = this.marginX() + (this.getPopupWidth() / 2);
+                    final int centerY = this.marginY() + (this.getPopupHeight() / 2);
+                    final int textColor = 0xFFFFFFFF;
+                    final int padding = 20;
+
+                    // TODO write help text
+
+                    // Localized explanation text
+                    final Component explanation = Component.translatable(KEY + ".popup.download-help");
+                    guiGraphics.drawCenteredString(this.font, explanation, centerX, centerY - (padding / 2), textColor);
+
+                    // URL example for where to find project slugs
+                    final Component urlExample = Component.literal("project-slug")
+                            .withStyle(ChatFormatting.BOLD, ChatFormatting.YELLOW);
+                    guiGraphics.drawCenteredString(this.font, urlExample, centerX, centerY + (padding / 2), textColor);
                 }
             }
         }
