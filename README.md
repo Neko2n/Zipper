@@ -32,12 +32,6 @@ This is done through "project slugs", found in the URL for the pack on correspon
 
 You can also configure packs to be downloaded in **support mode**, which will install a pack if it's not already on your machine but *won't load it*, just to support the author.
 
-#### Note About Alternatives
-
-Zipper seeks to provide functionality already made possible by mods like **Paxi** and **Resource Pack Overrides**.
-
-I've had personal gripes with how difficult it is to manage resource & data packs with these tools, so I made Zipper as a means of handling it all in one place.
-
 =================================================
 
 No generative AI was directly used in the creation of this project. All made by me :)
