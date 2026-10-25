@@ -7,6 +7,9 @@ import net.minecraft.resources.ResourceLocation;
 public interface Resources {
 
     public static interface Gui {
+        public static final ResourceLocation MODPACK_RESOURCES_ICON = ResourceLocation
+                .fromNamespaceAndPath(Zipper.MOD_ID, "textures/modpack_resources_pack.png");
+
         public static interface Sprites {
             public static interface Widgets {
                 public static interface TransferableSelection {

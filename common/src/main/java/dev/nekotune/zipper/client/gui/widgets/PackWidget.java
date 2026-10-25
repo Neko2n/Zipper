@@ -81,6 +81,10 @@ public class PackWidget extends AbstractWidget {
         return ICON_SIZE;
     }
 
+    public ResourceLocation getPackIcon() {
+        return PackUtils.getPackIcon(this.pack, this.minecraft.getTextureManager());
+    }
+
     @Override
     public void setWidth(final int width) {
         super.setWidth(width);
@@ -91,7 +95,7 @@ public class PackWidget extends AbstractWidget {
     @Override
     protected void renderWidget(final GuiGraphics guiGraphics,
             final int mouseX, final int mouseY, final float partialTick) {
-        guiGraphics.blit(PackUtils.getPackIcon(this.pack, this.minecraft.getTextureManager()), this.getX(), this.getY(),
+        guiGraphics.blit(this.getPackIcon(), this.getX(), this.getY(),
                 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
         final FormattedCharSequence formattedCharSequence = this.nameDisplayCache;
         final MultiLineLabel multiLineLabel = this.descriptionDisplayCache;

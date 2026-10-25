@@ -36,6 +36,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 
 // TODO show vanilla & unregistered packs and allow converting them into zipper packs
@@ -415,12 +416,20 @@ public class DependenciesScreen extends AbstractConfigScreen {
         }
 
         /**
-         * Custom PackWidget with a simplified description
+         * Custom PackWidget with a simplified description and a custom pack icon for
+         * the modpack resources pack.
          */
         public static class ZipperPackWidget extends PackWidget {
 
             public ZipperPackWidget(final Entry<?> entry) {
                 super(entry.screen.minecraft, 0, 0, 0, entry.pack);
+            }
+
+            public ResourceLocation getPackIcon() {
+                if (this.pack instanceof DependencyPack.ModpackResources) {
+                    return Resources.Gui.MODPACK_RESOURCES_ICON;
+                }
+                return super.getPackIcon();
             }
 
             @Override
@@ -585,7 +594,8 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 final LinkedList<Button> buttons = new LinkedList<>();
 
                 // Button which displays a help message on hover
-                final Button helpButton = Button.builder(Component.literal("?"), $ -> {})
+                final Button helpButton = Button.builder(Component.literal("?"), $ -> {
+                })
                         .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
                         .build();
                 final Tooltip helpTooltip = Tooltip.create(Component.translatable(KEY + ".modpack-resources.help"));

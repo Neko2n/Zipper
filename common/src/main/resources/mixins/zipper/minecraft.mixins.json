@@ -9,6 +9,7 @@
     "shared.PackRepositoryMixin"
   ],
   "client": [
+    "client.PackSelectionScreenMixin",
     "client.PackSelectionModelMixin",
     "client.ScreenAccessor"
   ],
