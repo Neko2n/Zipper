@@ -10,7 +10,6 @@ import java.util.Optional;
 
 import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.Zipper;
-import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.FilePackResources;
@@ -32,15 +31,14 @@ public class DependencyPack extends Pack {
             FeatureFlagSet.of(), List.of());
     public static final int TOKEN_COLOR = 0xFFF5AA42;
 
-    private static final Component BADGE = Component.literal(" (modpack)")
-            .withStyle(ChatFormatting.BOLD);
+    private static final Component DECORATOR = Component.translatableWithFallback(Zipper.MOD_ID + ".pack-decorator", " (modpack)");
 
     /**
      * Custom source type decorator for modpack-loaded dependency packs.
      */
     public static final PackSource SOURCE = PackSource.create((final Component name) -> {
         return Component.empty().append(name)
-                .append(BADGE).withColor(TOKEN_COLOR);
+                .append(DECORATOR).withColor(TOKEN_COLOR);
     }, true);
 
     public final DependencyInfo info;

@@ -68,5 +68,6 @@
 
     "zipper.gui.widget.input.ordered-list.add.narration": "Add new item",
 
+    "zipper.pack-decorator": " (modpack)",
     "zipper.modpack-resources.description": "Resources for the modpack"
 }
