@@ -2,11 +2,11 @@ package dev.nekotune.zipper.client.gui.widgets;
 
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.Map;
 
 import com.google.common.hash.Hashing;
 import com.mojang.blaze3d.platform.NativeImage;
 
+import dev.nekotune.zipper.Resources;
 import dev.nekotune.zipper.Zipper;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -32,18 +32,18 @@ import net.minecraft.util.FormattedCharSequence;
 /**
  * Widget which shows information about a resource/data pack.
  */
-public class PackWidget extends AbstractWidget {
+public class PackWidget<T extends Pack> extends AbstractWidget {
 
     private static final String TOO_LONG_NAME_SUFFIX = "...";
     private static final int ICON_SIZE = 32;
 
     protected final Minecraft minecraft;
-    protected final Pack pack;
+    protected final T pack;
     private FormattedCharSequence nameDisplayCache;
     private MultiLineLabel descriptionDisplayCache;
 
     public PackWidget(final Minecraft minecraft, final int x, final int y, final int width,
-            final Pack pack) {
+            final T pack) {
         super(x, y, width, ICON_SIZE, pack.getTitle());
         this.minecraft = minecraft;
         this.pack = pack;
@@ -66,7 +66,8 @@ public class PackWidget extends AbstractWidget {
     }
 
     private MultiLineLabel computeDescriptionLabel() {
-        return MultiLineLabel.create(this.minecraft.font, this.getWidth() - ICON_SIZE, 2, new Component[] { computeDescription() });
+        return MultiLineLabel.create(this.minecraft.font, this.getWidth() - ICON_SIZE, 2,
+                new Component[] { computeDescription() });
     }
 
     protected Component computeDescription() {
@@ -110,9 +111,7 @@ public class PackWidget extends AbstractWidget {
     }
 
     protected static final class PackUtils {
-        private static final ResourceLocation DEFAULT_ICON = ResourceLocation
-                .withDefaultNamespace("textures/misc/unknown_pack.png");
-        private static final Map<String, ResourceLocation> iconCache = new HashMap<>();
+        private static final HashMap<String, ResourceLocation> iconCache = new HashMap<>();
 
         /**
          * Copied from {@link PackSelectionModel.Entry}
@@ -125,44 +124,39 @@ public class PackWidget extends AbstractWidget {
         }
 
         /**
-         * Copied from {@link PackSelectionScreen}
+         * Derived from {@link PackSelectionScreen}
          * 
          * @param pack           The pack to fetch the icon for.
          * @param textureManager The TextureManager to fetch the icon from.
-         * @return The ICON_SIZExICON_SIZE icon for the given pack.
+         * @return The icon for the given pack.
          */
         public static ResourceLocation getPackIcon(final Pack pack, final TextureManager textureManager) {
             return iconCache.computeIfAbsent(pack.getId(), $ -> loadPackIcon(pack, textureManager));
         }
 
         /**
-         * Copied from {@link PackSelectionScreen}
+         * Derived from {@link PackSelectionScreen}
          */
         private static ResourceLocation loadPackIcon(final Pack pack, final TextureManager textureManager) {
             try {
-                ResourceLocation resourcelocation1;
                 try (PackResources packresources = pack.open()) {
-                    IoSupplier<InputStream> iosupplier = packresources.getRootResource("pack.png");
+                    final IoSupplier<InputStream> iosupplier = packresources.getRootResource("pack.png");
                     if (iosupplier == null) {
-                        return DEFAULT_ICON;
+                        return Resources.Gui.DEFAULT_PACK_ICON;
                     }
-
                     String s = pack.getId();
-                    ResourceLocation resourcelocation = ResourceLocation.withDefaultNamespace(
+                    final ResourceLocation icon = ResourceLocation.withDefaultNamespace(
                             "pack/" + Util.sanitizeName(s, ResourceLocation::validPathChar) + "/"
                                     + Hashing.sha256().hashUnencodedChars(s) + "/icon");
-
                     try (InputStream inputstream = iosupplier.get()) {
-                        NativeImage nativeimage = NativeImage.read(inputstream);
-                        textureManager.register(resourcelocation, new DynamicTexture(nativeimage));
-                        resourcelocation1 = resourcelocation;
+                        final NativeImage nativeimage = NativeImage.read(inputstream);
+                        textureManager.register(icon, new DynamicTexture(nativeimage));
                     }
+                    return icon;
                 }
-
-                return resourcelocation1;
-            } catch (Exception exception) {
-                Zipper.LOG.warn("Failed to load icon from pack {}", pack.getId(), exception);
-                return DEFAULT_ICON;
+            } catch (final Exception e) {
+                Zipper.LOG.warn("Failed to load icon from pack " + pack.getId(), e);
+                return Resources.Gui.DEFAULT_PACK_ICON;
             }
         }
     }

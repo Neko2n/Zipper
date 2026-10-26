@@ -1,5 +1,7 @@
 package dev.nekotune.zipper.platform.services;
 
+import java.nio.file.Path;
+
 public interface IPlatformHelper {
 
     public static enum Dist {
@@ -35,6 +37,13 @@ public interface IPlatformHelper {
      * @return Distribution type
      */
     public abstract Dist dist();
+
+    /**
+     * Gets the current working directory of the game (the .minecraft folder)
+     * 
+     * @return The Path object for the game directory
+     */
+    public abstract Path getGameDirectory();
 
     /**
      * Gets the name of the environment type as a string.

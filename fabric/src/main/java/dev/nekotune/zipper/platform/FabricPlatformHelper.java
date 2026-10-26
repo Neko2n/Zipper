@@ -1,5 +1,7 @@
 package dev.nekotune.zipper.platform;
 
+import java.nio.file.Path;
+
 import dev.nekotune.zipper.platform.services.IPlatformHelper;
 
 import net.fabricmc.loader.api.FabricLoader;
@@ -33,5 +35,10 @@ public class FabricPlatformHelper implements IPlatformHelper {
             default:
                 throw new UnsupportedOperationException();
         }
+    }
+
+    @Override
+    public Path getGameDirectory() {
+        return FabricLoader.getInstance().getGameDir();
     }
 }

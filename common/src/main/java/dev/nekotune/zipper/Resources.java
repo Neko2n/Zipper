@@ -7,6 +7,8 @@ import net.minecraft.resources.ResourceLocation;
 public interface Resources {
 
     public static interface Gui {
+        public static final ResourceLocation DEFAULT_PACK_ICON = ResourceLocation
+                .withDefaultNamespace("textures/misc/unknown_pack.png");
         public static final ResourceLocation MODPACK_RESOURCES_ICON = ResourceLocation
                 .fromNamespaceAndPath(Zipper.MOD_ID, "textures/modpack_resources_pack.png");
 

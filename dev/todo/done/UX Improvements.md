@@ -31,7 +31,7 @@ Below that will be forced packs, and further below will be support packs.
 Packs may only be re-ordered within their given mode section. 
 
 
-## 4. Converting regular packs
+## 4. ~~Converting regular packs~~
 
 Packs that are in the default vanilla pack folders (resourcepacks and datapacks) will be listed on DependenciesScreens at the very bottom in their own section.
 

@@ -1,5 +1,6 @@
 package dev.nekotune.zipper.definition;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,6 +11,7 @@ import java.util.Optional;
 
 import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.Zipper;
+import dev.nekotune.zipper.platform.Services;
 import net.minecraft.SharedConstants;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.FilePackResources;
@@ -92,13 +94,19 @@ public class DependencyPack extends Pack {
      * @param info The information about the dependency to build the pack for.
      * @return The newly created DependencyPack object.
      * @throws IOException If the pack's file metadata could not be read.
+     * @throws FileNotFoundException If the pack's file is not found.
      */
-    public static DependencyPack from(final DependencyInfo info) throws IOException {
+    public static DependencyPack from(final DependencyInfo info) throws IOException, FileNotFoundException {
         final PackLocationInfo location = getPackLocation(info);
         final Pack.ResourcesSupplier supplier = getPackSupplier(info);
         final PackSelectionConfig selectionConfig = getPackSelectionConfig(info);
         final int version = SharedConstants.getCurrentVersion().getPackVersion(info.type());
-        final Metadata meta = Pack.readPackMetadata(location, supplier, version);
+        final Metadata meta;
+        if (info.fileExists()) {
+            meta = Pack.readPackMetadata(location, supplier, version);
+        } else {
+            throw new FileNotFoundException("File does not exist for dependency " + info.toString());
+        }
         if (meta == null) {
             throw new IOException("File metadata could not be read for dependency " + info.toString());
         }
@@ -138,7 +146,8 @@ public class DependencyPack extends Pack {
          * @return Folder path which contains the assets/data for this pack.
          */
         public Path getPath() {
-            return PATHS.get(this.info.type());
+            final Path gamePath = Services.PLATFORM.get().getGameDirectory();
+            return gamePath.resolve(PATHS.get(this.info.type()));
         }
 
         /**

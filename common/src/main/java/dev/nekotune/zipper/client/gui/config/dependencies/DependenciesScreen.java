@@ -1,25 +1,36 @@
 package dev.nekotune.zipper.client.gui.config.dependencies;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.Resources;
 import dev.nekotune.zipper.Zipper;
+import dev.nekotune.zipper.client.PackDirectoryWatcher;
 import dev.nekotune.zipper.client.gui.AbstractPopupScreen;
 import dev.nekotune.zipper.client.gui.config.AbstractConfigScreen;
 import dev.nekotune.zipper.client.gui.widgets.PackWidget;
 import dev.nekotune.zipper.client.gui.widgets.container.SettingsList;
 import dev.nekotune.zipper.definition.DependencyInfo;
 import dev.nekotune.zipper.definition.DependencyPack;
+import dev.nekotune.zipper.platform.Services;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -34,12 +45,16 @@ import net.minecraft.client.gui.layouts.SpacerElement;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.packs.PackSelectionScreen;
 import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackLocationInfo;
+import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
-
-// TODO show vanilla & unregistered packs and allow converting them into zipper packs
+import net.minecraft.server.packs.repository.FolderRepositorySource;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackSource;
 
 /**
  * Screen which shows a list of active dependencies.
@@ -61,14 +76,32 @@ public class DependenciesScreen extends AbstractConfigScreen {
                     .translatableWithFallback(KEY + "server-data", "Data Packs")
                     .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
 
+    /** Copied from {@link PackSelectionScreen} */
+    private static final int RELOAD_DELAY_TICKS = 20;
+
+    private final Path vanillaPackFolder;
     private final LinkedHashSet<DependencyPack> originalPacks;
     private final LinkedHashSet<DependencyPack> modifiedPacks;
+    private final HashMap<Pack, Path> vanillaPacks = new HashMap<>();
     private final PackType packType;
+    private int ticksToReload = 0;
+    private Optional<PackDirectoryWatcher> vanillaPackWatcher = Optional.empty();
     protected final Button createPackButton;
 
     public DependenciesScreen(final Screen lastScreen, final PackType packType) {
         super(TITLES.get(packType), lastScreen);
-        this.originalPacks = new LinkedHashSet<DependencyPack>(Config.INSTANCE.dependencies.stream()
+        this.packType = packType;
+
+        // Vanilla pack reader
+        final Path gamePath = Services.PLATFORM.get().getGameDirectory();
+        this.vanillaPackFolder = switch (packType) {
+            case CLIENT_RESOURCES -> gamePath.resolve("resourcepacks");
+            case SERVER_DATA -> gamePath.resolve("datapacks");
+        };
+        this.reloadVanillaPacks();
+
+        // Set up ordered original + modified pack lists
+        this.originalPacks = new LinkedHashSet<>(Config.INSTANCE.dependencies.stream()
                 .filter(d -> d.type() == packType)
                 .map(d -> {
                     try {
@@ -79,7 +112,8 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 })
                 .toList());
         this.modifiedPacks = new LinkedHashSet<>(this.originalPacks);
-        this.packType = packType;
+
+        // Button to create a new zipper pack from scratch
         this.createPackButton = Button.builder(
                 Component.literal("+").withStyle(ChatFormatting.BOLD),
                 (final Button button) -> editDependency(
@@ -87,6 +121,39 @@ public class DependenciesScreen extends AbstractConfigScreen {
                                 DependencyPack.TEMPLATE_META)))
                 .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
                 .build();
+        final Tooltip createPackTooltip = Tooltip.create(Component.translatable(KEY + ".button.create-new.tooltip"));
+        this.createPackButton.setTooltip(createPackTooltip);
+    }
+
+    // Reload for changes in the vanilla packs directory
+    private void reloadVanillaPacks() {
+        this.vanillaPacks.clear();
+        try {
+            Files.createDirectories(this.vanillaPackFolder);
+        } catch (final IOException e) {
+            Zipper.LOG.warn("Could not create pack directory \"" + this.vanillaPackFolder + "\"", e);
+            return;
+        }
+        final PackSource source = switch (this.packType) {
+            case PackType.CLIENT_RESOURCES -> PackSource.DEFAULT;
+            case PackType.SERVER_DATA -> PackSource.WORLD;
+        };
+        try {
+            FolderRepositorySource.discoverPacks(this.vanillaPackFolder,
+                    Minecraft.getInstance().directoryValidator(),
+                    (final Path path, final Pack.ResourcesSupplier resources) -> {
+                        final String name = path.getFileName().toString();
+                        final PackLocationInfo location = new PackLocationInfo(name, Component.literal(name), source,
+                                Optional.empty());
+                        final Pack pack = Pack.readMetaAndCreate(location, resources, this.packType,
+                                new PackSelectionConfig(false, Pack.Position.TOP, false));
+                        if (pack != null) { // I hate null
+                            this.vanillaPacks.put(pack, path);
+                        }
+                    });
+        } catch (final IOException e) {
+            Zipper.LOG.warn("Failed to list packs in \"" + this.vanillaPackFolder + "\"", e);
+        }
     }
 
     /**
@@ -97,11 +164,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
         Config.INSTANCE.dependencies.addAll(this.modifiedPacks.stream().map(p -> p.info).toList());
     }
 
-    /**
-     * Opens the editor screen for the given dependency.
-     * 
-     * @param dependency The dependency to edit.
-     */
+    // Opens the editor screen for the given dependency.
     private final void editDependency(final DependencyPack dependency) {
         final DependencyEditScreen.OnApply injectModified = (final DependencyPack original,
                 final DependencyPack modified) -> {
@@ -134,6 +197,47 @@ public class DependenciesScreen extends AbstractConfigScreen {
         final int y = this.height - this.getBarHeight() - this.createPackButton.getHeight() - 4;
         this.createPackButton.setPosition(x, y);
         this.addWidget(this.createPackButton);
+        if (this.vanillaPackWatcher.isEmpty()) {
+            this.vanillaPackWatcher = PackDirectoryWatcher.create(this.vanillaPackFolder);
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        this.vanillaPackWatcher.ifPresent(watcher -> {
+            try {
+                if (watcher.pollForChanges()) {
+                    this.ticksToReload = RELOAD_DELAY_TICKS;
+                }
+            } catch (final IOException e) {
+                Zipper.LOG.warn("DependenciesScreen failed to poll for changes in directory \"" + this.vanillaPackFolder
+                        + "\", stopping");
+                this.closeWatcher();
+            }
+        });
+        this.ticksToReload--;
+        if (this.ticksToReload == 0) {
+            this.reloadVanillaPacks();
+            this.refresh();
+        }
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+        this.closeWatcher();
+    }
+
+    private void closeWatcher() {
+        this.vanillaPackWatcher.ifPresent(watcher -> {
+            try {
+                watcher.close();
+            } catch (final IOException e) {
+                Zipper.LOG.warn("Failed to close file watcher for DependenciesScreen", e);
+            }
+            this.vanillaPackWatcher = Optional.empty();
+        });
     }
 
     @Override
@@ -179,6 +283,23 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 false, Component.translatable(KEY + ".section.optional-disabled.title"));
         populateSection(builder, sortedPacks.getOrDefault(DependencyInfo.Mode.SUPPORT, new LinkedList<>()),
                 false, Component.translatable(KEY + ".section.support.title"));
+
+        // List vanilla packs that can be converted into zipper packs
+        final Component sectionTitle = Component.translatable(KEY + ".section.vanilla.title")
+                .withStyle(ChatFormatting.GREEN);
+        builder.addElement(new StringWidget(sectionTitle, this.font));
+        final List<Pack> convertible = this.vanillaPacks.keySet().stream()
+                .filter(p -> !this.isConverted(p))
+                .sorted(Comparator.comparing(Pack::getId))
+                .toList();
+        if (!convertible.isEmpty()) {
+            for (final Pack pack : convertible) {
+                builder.addElement(new Entry.VanillaEntry(this, pack));
+            }
+        } else {
+            builder.addElement(new StringWidget(Component.literal("Nothing here :(")
+                    .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC), this.font));
+        }
     }
 
     private void populateSection(final SettingsList.SettingsContent.Builder builder,
@@ -187,10 +308,10 @@ public class DependenciesScreen extends AbstractConfigScreen {
             return;
         builder.addElement(new StringWidget(title, this.font));
         if (canMove) {
-            Optional<Entry<?>> above = Optional.empty();
-            Optional<Entry<?>> below = Optional.empty();
+            Optional<Entry<DependencyPack>> above = Optional.empty();
+            Optional<Entry<DependencyPack>> below = Optional.empty();
             for (int i = 0; i < packs.size(); i++) {
-                final Entry<?> entry = below.orElse(new Entry.DependencyEntry(this, packs.get(i)));
+                final Entry<DependencyPack> entry = below.orElse(new Entry.DependencyEntry(this, packs.get(i)));
                 if (i + 1 < packs.size()) {
                     final DependencyPack nextPack = packs.get(i + 1);
                     below = Optional.of(new Entry.DependencyEntry(this, nextPack));
@@ -205,6 +326,17 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 builder.addElement(new Entry.DependencyEntry(this, pack));
             }
         }
+    }
+
+    private boolean isConverted(final Pack pack) {
+        final Path filePath = this.vanillaPacks.get(pack);
+        final String fileName = filePath.getFileName().toString()
+                .replace(".zip", "");
+        final boolean fileExists = Files.exists(DependencyInfo.folder(packType)
+                .resolve(fileName + ".zip"));
+        final boolean isRegistered = this.modifiedPacks.stream()
+                .anyMatch(p -> fileName.equals(p.info.fileName()));
+        return fileExists && isRegistered;
     }
 
     @Override
@@ -223,7 +355,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
         return Component.translatableWithFallback(KEY + ".button.back", "Apply");
     }
 
-    protected static sealed abstract class Entry<T extends DependencyPack> extends AbstractContainerWidget {
+    protected static sealed abstract class Entry<T extends Pack> extends AbstractContainerWidget {
 
         /** Copied from {@link TransferableSelectionList} */
         private static final int HOVER_OVERLAY = 0xA0909090;
@@ -240,8 +372,8 @@ public class DependenciesScreen extends AbstractConfigScreen {
         protected final LinkedList<Button> interactionButtons;
         public final DependenciesScreen screen;
         public final T pack;
-        public Optional<Entry<?>> above = Optional.empty();
-        public Optional<Entry<?>> below = Optional.empty();
+        public Optional<Entry<DependencyPack>> above = Optional.empty();
+        public Optional<Entry<DependencyPack>> below = Optional.empty();
 
         public Entry(final DependenciesScreen screen, final T pack) {
             super(0, 0, screen.getInnerWidth() - 4, 32, pack.getTitle());
@@ -301,14 +433,16 @@ public class DependenciesScreen extends AbstractConfigScreen {
          * 
          * @param swapWith The entry to swap loading priorities (positions) with.
          */
-        public void swapWith(final Entry<?> swapWith) {
+        public void swapWith(final Entry<DependencyPack> swapWith) {
+            if (!(this.pack instanceof final DependencyPack pack))
+                return;
             final var backup = new LinkedHashSet<>(this.screen.modifiedPacks);
             this.screen.modifiedPacks.clear();
             for (final DependencyPack existing : backup) {
                 if (existing == this.pack) {
                     this.screen.modifiedPacks.add(swapWith.pack);
                 } else if (existing == swapWith.pack) {
-                    this.screen.modifiedPacks.add(this.pack);
+                    this.screen.modifiedPacks.add(pack);
                 } else {
                     this.screen.modifiedPacks.add(existing);
                 }
@@ -419,15 +553,19 @@ public class DependenciesScreen extends AbstractConfigScreen {
          * Custom PackWidget with a simplified description and a custom pack icon for
          * the modpack resources pack.
          */
-        public static class ZipperPackWidget extends PackWidget {
+        public static class ZipperPackWidget extends PackWidget<Pack> {
 
-            public ZipperPackWidget(final Entry<?> entry) {
+            public ZipperPackWidget(final Entry<? extends Pack> entry) {
                 super(entry.screen.minecraft, 0, 0, 0, entry.pack);
             }
 
             public ResourceLocation getPackIcon() {
                 if (this.pack instanceof DependencyPack.ModpackResources) {
                     return Resources.Gui.MODPACK_RESOURCES_ICON;
+                }
+                if (this.pack instanceof final DependencyPack dependencyPack
+                        && !dependencyPack.info.fileExists()) {
+                    return Resources.Gui.DEFAULT_PACK_ICON;
                 }
                 return super.getPackIcon();
             }
@@ -465,8 +603,6 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 final Button deleteButton = SpriteIconButton.builder(
                         Component.empty(),
                         (final Button button) -> {
-
-                            // On click, re-build the scroll list with this dependency removed.
                             this.screen.minecraft.setScreen(new DeleteConfirmationScreen(this.screen, this));
                         },
                         true)
@@ -558,6 +694,13 @@ public class DependenciesScreen extends AbstractConfigScreen {
                     super.onClose();
                     if (this.confirmed) {
                         this.entry.screen.modifiedPacks.remove(this.entry.pack);
+                        final boolean isEnabled = this.entry.pack.info.type() == PackType.CLIENT_RESOURCES
+                                && this.entry.screen.minecraft.getResourcePackRepository()
+                                        .getSelectedIds().contains(this.entry.pack.getId());
+                        if (isEnabled) {
+                            this.entry.screen.apply();
+                            this.entry.screen.minecraft.reloadResourcePacks();
+                        }
                         this.entry.screen.refresh();
                     }
                 }
@@ -608,6 +751,95 @@ public class DependenciesScreen extends AbstractConfigScreen {
             @Override
             public boolean alwaysShowButtons() {
                 return false;
+            }
+        }
+
+        /**
+         * Entry for vanilla packs that can be converted into zipper packs
+         */
+        public static final class VanillaEntry extends Entry<Pack> {
+
+            public VanillaEntry(final DependenciesScreen screen, final Pack pack) {
+                super(screen, pack);
+            }
+
+            @Override
+            public LinkedList<Button> constructInteractionButtons() {
+
+                final LinkedList<Button> buttons = new LinkedList<>();
+
+                // Button which converts the pack into a zipper pack
+                final Button.OnPress convert = $ -> this.convertToZipperPack();
+                final Button convertButton = Button.builder(Component.literal("%"), convert)
+                        .size(Button.DEFAULT_HEIGHT, Button.DEFAULT_HEIGHT)
+                        .build();
+                final Tooltip convertTooltip = Tooltip.create(Component.translatable(KEY + ".convert.tooltip"));
+                convertButton.setTooltip(convertTooltip);
+
+                buttons.add(convertButton);
+                return buttons;
+            }
+
+            @Override
+            public boolean alwaysShowButtons() {
+                return true;
+            }
+
+            private void convertToZipperPack() {
+                final Path src = this.screen.vanillaPacks.get(this.pack);
+                String destFileName = src.getFileName().toString();
+                if (!destFileName.endsWith(".zip")) {
+                    destFileName += ".zip";
+                }
+                final Path dest = DependencyInfo.folder(this.screen.packType)
+                        .resolve(destFileName);
+                try {
+                    Files.createDirectories(dest.getParent());
+                    if (Files.isDirectory(src)) {
+                        zipDirectory(src, dest);
+                    } else {
+                        Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                } catch (final IOException e) {
+                    Zipper.LOG.error("Pack conversion failed; Failed to copy file \""
+                            + src + "\" to \"" + dest + "\"", e);
+                    return;
+                }
+                final DependencyInfo info = new DependencyInfo(this.screen.packType,
+                        src.getFileName().toString().replace(".zip", ""),
+                        DependencyInfo.Mode.OPTIONAL_DISABLED,
+                        new EnumMap<>(DependencyInfo.Host.class));
+                DependencyPack pack;
+                try {
+                    pack = DependencyPack.from(info);
+                } catch (final IOException e) {
+                    pack = DependencyPack.from(info, DependencyPack.TEMPLATE_META);
+                }
+                this.screen.modifiedPacks.add(pack);
+                this.screen.editDependency(pack);
+            }
+
+            private static void zipDirectory(final Path src, final Path dest)
+                    throws IOException {
+                final Path tmpFile = Files.createTempFile(dest.getParent(),
+                        dest.getFileName().toString(), ".tmp");
+                try {
+                    try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(tmpFile));
+                            Stream<Path> paths = Files.walk(src)) {
+                        for (final Path path : (Iterable<Path>) paths::iterator) {
+                            if (Files.isDirectory(path))
+                                continue;
+                            final String entryName = src.relativize(path).toString()
+                                    .replace(path.getFileSystem().getSeparator(), "/");
+                            zip.putNextEntry(new ZipEntry(entryName));
+                            Files.copy(path, zip);
+                            zip.closeEntry();
+                        }
+                    }
+                    Files.move(tmpFile, dest, StandardCopyOption.REPLACE_EXISTING);
+                } finally {
+                    Files.deleteIfExists(tmpFile);
+                }
             }
         }
     }

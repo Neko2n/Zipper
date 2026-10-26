@@ -16,6 +16,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.Since;
 import dev.nekotune.zipper.definition.DependencyInfo;
+import dev.nekotune.zipper.platform.Services;
 
 public final class Config {
 
@@ -101,14 +102,16 @@ public final class Config {
     }
 
     private static Optional<Config> fromExisting() {
-        if (!(Files.exists(FILE_PATH) && Files.isReadable(FILE_PATH))) {
+        final Path filePath = Services.PLATFORM.get().getGameDirectory()
+                .resolve(FILE_PATH);
+        if (!(Files.exists(filePath) && Files.isReadable(filePath))) {
             Zipper.LOG.debug("[Config] No config file found at "
-                    + FILE_PATH.toString()
+                    + filePath.toString()
                     + "; Using default settings");
             return Optional.empty();
         }
         try {
-            final BufferedReader reader = Files.newBufferedReader(FILE_PATH);
+            final BufferedReader reader = Files.newBufferedReader(filePath);
             final Config config = GSON.fromJson(reader, Config.class);
             reader.close();
             sanitize(config);
@@ -120,14 +123,14 @@ public final class Config {
                 Path backupPath;
                 long i = 1;
                 while (true) {
-                    backupPath = FILE_PATH.resolveSibling(
-                            FILE_PATH.getFileName() + "-" + i + ".bak");
+                    backupPath = filePath.resolveSibling(
+                            filePath.getFileName() + "-" + i + ".bak");
                     if (!Files.exists(backupPath)) {
                         break;
                     }
                     i++;
                 }
-                Files.copy(FILE_PATH, backupPath, StandardCopyOption.COPY_ATTRIBUTES);
+                Files.copy(filePath, backupPath, StandardCopyOption.COPY_ATTRIBUTES);
                 Zipper.LOG.debug("[Config] Backup created at " + backupPath.toString());
             } catch (final IOException e2) {
                 Zipper.LOG.error("[Config] Backup FAILED: " + e2.toString());

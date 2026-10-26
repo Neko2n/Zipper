@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import dev.nekotune.zipper.definition.web.Curseforge;
 import dev.nekotune.zipper.definition.web.Modrinth;
 import dev.nekotune.zipper.definition.web.WebHost;
-
+import dev.nekotune.zipper.platform.Services;
 import net.minecraft.server.packs.PackType;
 
 /**
@@ -66,18 +66,18 @@ public record DependencyInfo(
      */
     public static Path folder(final PackType packType) {
         return folder$CACHE.computeIfAbsent(packType, t -> {
-            final String rootFolder;
+            Path dir = Services.PLATFORM.get().getGameDirectory();
             switch (packType) {
                 case CLIENT_RESOURCES:
-                    rootFolder = "resourcepacks";
+                    dir = dir.resolve("resourcepacks");
                     break;
                 case SERVER_DATA:
-                    rootFolder = "datapacks";
+                    dir = dir.resolve("datapacks");
                     break;
                 default:
                     throw new UnsupportedOperationException();
             }
-            return Path.of(rootFolder, ".zipper");
+            return dir.resolve(".zipper");
         });
     }
 

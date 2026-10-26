@@ -89,7 +89,8 @@ public class DependencyEditScreen extends AbstractConfigScreen {
     @Override
     protected void onPressBack() {
         this.backButton.active = false;
-        String fileName = this.settingsWidgets.fileName().getValue();
+        String fileName = this.settingsWidgets.fileName().getValue()
+                .replace(".zip", "");
         int i = 1;
         while (this.takenFileNames.contains(fileName)) {
             fileName = this.settingsWidgets.fileName().getValue() + " (" + i + ")";

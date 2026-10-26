@@ -1,10 +1,13 @@
 package dev.nekotune.zipper.platform;
 
+import java.nio.file.Path;
+
 import dev.nekotune.zipper.platform.services.IPlatformHelper;
 
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLPaths;
 
 public class NeoForgePlatformHelper implements IPlatformHelper {
 
@@ -33,5 +36,10 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
             default:
                 throw new UnsupportedOperationException();
         }
+    }
+
+    @Override
+    public Path getGameDirectory() {
+        return FMLPaths.GAMEDIR.get();
     }
 }
