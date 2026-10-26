@@ -572,7 +572,11 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
             @Override
             protected Component computeDescription() {
-                return this.pack.getDescription();
+                final Component description = this.pack.getDescription();
+                if (this.pack.getPackSource() == PackSource.BUILT_IN) {
+                    return this.pack.getPackSource().decorate(description);
+                }
+                return description;
             }
         }
 
