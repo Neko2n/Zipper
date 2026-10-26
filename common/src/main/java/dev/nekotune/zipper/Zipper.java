@@ -22,7 +22,7 @@ import net.minecraft.server.packs.repository.PackRepository;
 public final class Zipper {
 
     public static final String MOD_ID = "zipper";
-    public static final String MOD_NAME = "Modpack Dependency Manager";
+    public static final String MOD_NAME = "Zipper";
     public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
     
     /**
