@@ -16,6 +16,11 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 
+// TODO change "hideBuiltIn" setting to be a hidden packs whitelist
+// This will be a new screen which displays PackWidgets for all visible non-zipper packs.
+// Each pack widget will have a boolean on/off toggle to hide it
+// Controlled through a config file setting which is simply a whitelist of pack IDs to hide
+
 public class MainConfigScreen extends AbstractConfigScreen {
 
     protected static final String KEY = AbstractConfigScreen.KEY + ".main";
