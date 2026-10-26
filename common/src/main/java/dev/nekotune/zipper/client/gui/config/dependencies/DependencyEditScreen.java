@@ -3,6 +3,7 @@ package dev.nekotune.zipper.client.gui.config.dependencies;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -192,9 +193,13 @@ public class DependencyEditScreen extends AbstractConfigScreen {
 
         // Selection button for how the pack should be loaded into the game
         private static SelectionInput<DependencyInfo.Mode> initModeInput(final DependencyEditScreen editScreen) {
+            final LinkedHashSet<DependencyInfo.Mode> orderedModes = new LinkedHashSet<>();
+            for (final DependencyInfo.Mode mode : DependencyInfo.Mode.values()) {
+                orderedModes.add(mode);
+            }
             final var modeInput = new SelectionInput<DependencyInfo.Mode>(0, 0,
                     Button.SMALL_WIDTH, Button.DEFAULT_HEIGHT,
-                    Set.of(DependencyInfo.Mode.values()), editScreen.editing.info.mode(),
+                    orderedModes, editScreen.editing.info.mode(),
                     $ -> editScreen.backButton.active = true);
             for (final DependencyInfo.Mode mode : DependencyInfo.Mode.values()) {
 

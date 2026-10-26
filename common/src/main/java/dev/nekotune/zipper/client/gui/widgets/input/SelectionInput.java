@@ -1,6 +1,7 @@
 package dev.nekotune.zipper.client.gui.widgets.input;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -18,7 +19,7 @@ public class SelectionInput<T extends Enum<T>> extends Button {
     private boolean autoTooltips = false;
 
     public SelectionInput(final int x, final int y, final int width, final int height,
-            final Set<T> values, final T defaultValue, final Button.OnPress onPress) {
+            final LinkedHashSet<T> values, final T defaultValue, final Button.OnPress onPress) {
         super(x, y, width, height, Component.empty(), onPress, Button.DEFAULT_NARRATION);
         this.values = new LinkedList<>(values);
         this.setValue(defaultValue);
