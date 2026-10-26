@@ -186,6 +186,7 @@ public class DependencyEditScreen extends AbstractConfigScreen {
                     Component.literal(editScreen.editing.info.fileName()));
             fileNameEditBox.setValue(editScreen.editing.info.fileName());
             fileNameEditBox.setResponder(text -> editScreen.backButton.active = true);
+            fileNameEditBox.setMaxLength(100);
             return fileNameEditBox;
         }
 
