@@ -33,7 +33,8 @@ public class DependencyPack extends Pack {
             FeatureFlagSet.of(), List.of());
     public static final int TOKEN_COLOR = 0xFFF5AA42;
 
-    private static final Component DECORATOR = Component.translatableWithFallback(Zipper.MOD_ID + ".pack-decorator", " (modpack)");
+    private static final Component DECORATOR = Component.translatableWithFallback(Zipper.MOD_ID + ".pack-decorator",
+            " (modpack)");
 
     /**
      * Custom source type decorator for modpack-loaded dependency packs.
@@ -93,7 +94,7 @@ public class DependencyPack extends Pack {
      * 
      * @param info The information about the dependency to build the pack for.
      * @return The newly created DependencyPack object.
-     * @throws IOException If the pack's file metadata could not be read.
+     * @throws IOException           If the pack's file metadata could not be read.
      * @throws FileNotFoundException If the pack's file is not found.
      */
     public static DependencyPack from(final DependencyInfo info) throws IOException, FileNotFoundException {
@@ -127,6 +128,19 @@ public class DependencyPack extends Pack {
 
     public static final class ModpackResources extends DependencyPack {
 
+        public static final String ID = "modpack_resources";
+        public static final String FILE_NAME = "modpack";
+        private static final Component TITLE = Component
+                .translatable(Zipper.MOD_ID + ".modpack-resources.title");
+        private static final Component DESCRIPTION = Component
+                .translatable(Zipper.MOD_ID + ".modpack-resources.description");
+        private static final PackLocationInfo LOCATION = new PackLocationInfo(ID,
+                DESCRIPTION, PackSource.BUILT_IN, Optional.empty());
+        private static final Metadata META = new Metadata(DESCRIPTION, PackCompatibility.COMPATIBLE,
+                FeatureFlagSet.of(), List.of());
+        private static final PackSelectionConfig SELECTION_CONFIG = new PackSelectionConfig(
+                true, Position.BOTTOM, true);
+
         /**
          * The directory which holds modpack resources.
          */
@@ -137,9 +151,9 @@ public class DependencyPack extends Pack {
         private static final EnumMap<PackType, ModpackResources> cache = new EnumMap<>(PackType.class);
 
         private ModpackResources(final DependencyInfo info) {
-            super(info, ModpackResources$Info.LOCATION,
+            super(info, LOCATION,
                     new PathPackResources.PathResourcesSupplier(PATHS.get(info.type()).getParent()),
-                    ModpackResources$Info.META, ModpackResources$Info.SELECTION_CONFIG);
+                    META, SELECTION_CONFIG);
         }
 
         /**
@@ -148,6 +162,11 @@ public class DependencyPack extends Pack {
         public Path getPath() {
             final Path gamePath = Services.PLATFORM.get().getGameDirectory();
             return gamePath.resolve(PATHS.get(this.info.type()));
+        }
+
+        @Override
+        public Component getTitle() {
+            return TITLE;
         }
 
         /**
@@ -168,23 +187,11 @@ public class DependencyPack extends Pack {
             if (!Files.exists(directory)) {
                 Files.createDirectories(directory);
             }
-            final var info = new DependencyInfo(packType, ModpackResources$Info.NAME,
+            final var info = new DependencyInfo(packType, FILE_NAME,
                     DependencyInfo.Mode.FORCED, new EnumMap<>(DependencyInfo.Host.class));
             final ModpackResources instance = new ModpackResources(info);
             cache.put(packType, instance);
             return instance;
-        }
-
-        private static final class ModpackResources$Info {
-            public static final String NAME = "Modpack Resources";
-            public static final Component DESCRIPTION = Component
-                    .translatable(Zipper.MOD_ID + ".modpack-resources.description");
-            public static final PackLocationInfo LOCATION = new PackLocationInfo(NAME,
-                    DESCRIPTION, PackSource.BUILT_IN, Optional.empty());
-            public static final Metadata META = new Metadata(DESCRIPTION, PackCompatibility.COMPATIBLE,
-                    FeatureFlagSet.of(), List.of());
-            public static final PackSelectionConfig SELECTION_CONFIG = new PackSelectionConfig(
-                    true, Position.BOTTOM, true);
         }
     }
 }

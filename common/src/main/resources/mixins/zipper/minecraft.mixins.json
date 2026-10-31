@@ -6,11 +6,13 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "shared.BuiltInPackSourceAccessor",
-    "shared.PackRepositoryMixin"
+    "shared.PackRepositoryMixin",
+    "shared.PackMixin"
   ],
   "client": [
     "client.PackSelectionScreenMixin",
     "client.PackSelectionModelMixin",
+    "client.TransferableSelectionList.PackEntryMixin",
     "client.ScreenAccessor"
   ],
   "server": [],

@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.repository.Pack;
 
 /**
- * Set a custom pack icon for the modpack resources packs.
+ * Set a custom pack icon for the modpack resources packs
  */
 @Mixin(PackSelectionScreen.class)
 public class PackSelectionScreenMixin {

@@ -28,14 +28,13 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
 /**
  * Pop-up screen to edit a dependency.
  */
-public class DependencyEditScreen extends AbstractConfigScreen {
+public class DependencyEditScreen extends AbstractConfigScreen<DependenciesScreen> {
 
     protected static final String KEY = DependenciesScreen.KEY + ".edit";
     private static final Component TITLE = Component.translatableWithFallback(KEY + ".title", "Edit Dependency")
@@ -48,7 +47,7 @@ public class DependencyEditScreen extends AbstractConfigScreen {
     private final Set<String> takenFileNames;
     private SettingsWidgets settingsWidgets;
 
-    protected DependencyEditScreen(final Screen below,
+    protected DependencyEditScreen(final DependenciesScreen below,
             final DependencyPack dependency, final OnApply onApply,
             final Set<String> takenFileNames) {
         super(TITLE, below);

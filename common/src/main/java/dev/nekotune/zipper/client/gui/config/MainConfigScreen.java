@@ -16,12 +16,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 
-// TODO change "hideBuiltIn" setting to be a hidden packs whitelist
-// This will be a new screen which displays PackWidgets for all visible non-zipper packs.
-// Each pack widget will have a boolean on/off toggle to hide it
-// Controlled through a config file setting which is simply a whitelist of pack IDs to hide
-
-public class MainConfigScreen extends AbstractConfigScreen {
+public class MainConfigScreen extends AbstractConfigScreen<Screen> {
 
     protected static final String KEY = AbstractConfigScreen.KEY + ".main";
     protected static final Component TITLE = Component
@@ -46,8 +41,6 @@ public class MainConfigScreen extends AbstractConfigScreen {
             this.minecraft.setScreen(new DependenciesScreen(this, PackType.SERVER_DATA));
         });
         MainSettings.PRODUCTION.appendTo(builder, this.font);
-        MainSettings.HIDE_FORCED.appendTo(builder, this.font);
-        MainSettings.HIDE_BUILT_IN.appendTo(builder, this.font);
         MainSettings.WARN_ENABLED.appendTo(builder, this.font);
         MainSettings.PROMPT_ENABLED.appendTo(builder, this.font);
         MainSettings.DISABLE_COMPATIBILITY_WARNINGS.appendTo(builder, this.font);
@@ -58,16 +51,6 @@ public class MainConfigScreen extends AbstractConfigScreen {
         PRODUCTION(font -> {
             final var toggle = new ToggleInput.TextToggle(Config.INSTANCE.production);
             toggle.setResponder(value -> Config.INSTANCE.production = value);
-            return toggle;
-        }),
-        HIDE_FORCED(font -> {
-            final var toggle = new ToggleInput.TextToggle(Config.INSTANCE.hideForced);
-            toggle.setResponder(value -> Config.INSTANCE.hideForced = value);
-            return toggle;
-        }),
-        HIDE_BUILT_IN(font -> {
-            final var toggle = new ToggleInput.TextToggle(Config.INSTANCE.hideBuiltIn);
-            toggle.setResponder(value -> Config.INSTANCE.hideBuiltIn = value);
             return toggle;
         }),
         WARN_ENABLED(font -> {

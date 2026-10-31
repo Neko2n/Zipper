@@ -2,6 +2,7 @@ package dev.nekotune.zipper.client.gui.widgets.container;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 
@@ -9,13 +10,13 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.LayoutElement;
+import net.minecraft.client.gui.layouts.LayoutSettings;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-
 
 /**
  * Widget which renders a scrolling list of child widgets.
@@ -53,11 +54,16 @@ public class ScrollContainer extends AbstractContainerWidget {
         return this.children;
     }
 
-    public final void addChild(final LayoutElement child, final Component narration) {
+    public final void addChild(final LayoutElement child, final Component narration,
+            final Consumer<LayoutSettings> layoutSettingsFactory) {
         child.visitWidgets(this.children::add);
-        this.layout.addChild(child);
+        this.layout.addChild(child, layoutSettingsFactory);
         this.setMessage(this.getMessage().copy().append(narration));
         updateLayout();
+    }
+
+    public final void addChild(final LayoutElement child, final Component narration) {
+        this.addChild(child, narration, $ -> {});
     }
 
     // Match children positions to parent

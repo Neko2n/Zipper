@@ -13,9 +13,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import com.mojang.blaze3d.platform.InputConstants;
 
 import dev.nekotune.zipper.Config;
 import dev.nekotune.zipper.Resources;
@@ -54,7 +57,9 @@ import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.FolderRepositorySource;
 import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.packs.repository.PackSource;
+import net.minecraft.server.packs.repository.ServerPacksSource;
 
 /**
  * Screen which shows a list of active dependencies.
@@ -64,7 +69,7 @@ import net.minecraft.server.packs.repository.PackSource;
  * New dependencies may be added to the list with a button.
  * Dependencies may be re-ordered with arrow buttons.
  */
-public class DependenciesScreen extends AbstractConfigScreen {
+public class DependenciesScreen extends AbstractConfigScreen<AbstractConfigScreen<?>> {
 
     protected static final String KEY = AbstractConfigScreen.KEY + ".dependencies";
 
@@ -79,18 +84,31 @@ public class DependenciesScreen extends AbstractConfigScreen {
     /** Copied from {@link PackSelectionScreen} */
     private static final int RELOAD_DELAY_TICKS = 20;
 
+    private final PackRepository packRepository;
     private final Path vanillaPackFolder;
-    private final LinkedHashSet<DependencyPack> originalPacks;
-    private final LinkedHashSet<DependencyPack> modifiedPacks;
+    private final HashSet<DependencyPack> packs$original;
+    private final HashSet<DependencyPack> packs;
+    private final LinkedList<String> orderedPackIDs;
+    private final LinkedList<String> orderedPackIDs$original;
+    private final HashMap<Pack, DependencyInfo.Mode> packOverrides;
     private final HashMap<Pack, Path> vanillaPacks = new HashMap<>();
     private final PackType packType;
     private int ticksToReload = 0;
     private Optional<PackDirectoryWatcher> vanillaPackWatcher = Optional.empty();
     protected final Button createPackButton;
 
-    public DependenciesScreen(final Screen lastScreen, final PackType packType) {
+    public DependenciesScreen(final AbstractConfigScreen<?> lastScreen, final PackType packType) {
         super(TITLES.get(packType), lastScreen);
         this.packType = packType;
+
+        this.packRepository = switch (packType) {
+            case CLIENT_RESOURCES -> Minecraft.getInstance().getResourcePackRepository();
+            case SERVER_DATA -> {
+                final PackRepository r = ServerPacksSource.createVanillaTrustedRepository();
+                r.reload();
+                yield r;
+            }
+        };
 
         // Vanilla pack reader
         final Path gamePath = Services.PLATFORM.get().getGameDirectory();
@@ -101,7 +119,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
         this.reloadVanillaPacks();
 
         // Set up ordered original + modified pack lists
-        this.originalPacks = new LinkedHashSet<>(Config.INSTANCE.dependencies.stream()
+        this.packs$original = new LinkedHashSet<>(Config.INSTANCE.dependencies.stream()
                 .filter(d -> d.type() == packType)
                 .map(d -> {
                     try {
@@ -111,7 +129,26 @@ public class DependenciesScreen extends AbstractConfigScreen {
                     }
                 })
                 .toList());
-        this.modifiedPacks = new LinkedHashSet<>(this.originalPacks);
+        this.packs = new LinkedHashSet<>(this.packs$original);
+
+        // Set up required packs override list
+        this.packOverrides = new HashMap<>();
+        for (final Pack pack : this.packRepository.getAvailablePacks()) {
+            if (Config.INSTANCE.packOverrides.containsKey(pack.getId())) {
+                this.packOverrides.put(pack, Config.INSTANCE.packOverrides.get(pack.getId()));
+            }
+        }
+
+        // Set up initial pack order
+        this.orderedPackIDs$original = new LinkedList<>();
+        Zipper.reorderPacks(this.packRepository.getSelectedPacks().stream()
+                .filter(p -> !(p instanceof DependencyPack.ModpackResources) && (p.isRequired()
+                        || (p instanceof final DependencyPack dp && dp.info.mode().isOrdered)))
+                .toList())
+                .stream()
+                .map(Pack::getId)
+                .forEach(id -> this.orderedPackIDs$original.addFirst(id));
+        this.orderedPackIDs = new LinkedList<>(this.orderedPackIDs$original);
 
         // Button to create a new zipper pack from scratch
         this.createPackButton = Button.builder(
@@ -160,29 +197,26 @@ public class DependenciesScreen extends AbstractConfigScreen {
      * Injects all modified dependencies into the configuration.
      */
     protected void apply() {
-        Config.INSTANCE.dependencies.removeAll(this.originalPacks.stream().map(p -> p.info).toList());
-        Config.INSTANCE.dependencies.addAll(this.modifiedPacks.stream().map(p -> p.info).toList());
+        Config.INSTANCE.dependencies.removeAll(this.packs$original.stream().map(p -> p.info).toList());
+        Config.INSTANCE.dependencies.addAll(this.packs.stream().map(p -> p.info).toList());
+        Config.INSTANCE.orderedPackIDs.removeAll(this.orderedPackIDs$original);
+        Config.INSTANCE.orderedPackIDs.addAll(this.orderedPackIDs);
+        Config.INSTANCE.packOverrides.clear();
+        for (final Pack pack : this.packOverrides.keySet()) {
+            final DependencyInfo.Mode mode = this.packOverrides.get(pack);
+            Config.INSTANCE.packOverrides.put(pack.getId(), mode);
+        }
     }
 
     // Opens the editor screen for the given dependency.
     private final void editDependency(final DependencyPack dependency) {
         final DependencyEditScreen.OnApply injectModified = (final DependencyPack original,
                 final DependencyPack modified) -> {
-            final var backup = new LinkedHashSet<>(this.modifiedPacks);
-            this.modifiedPacks.clear();
-            for (final DependencyPack pack : backup) {
-                if (pack == original) {
-                    this.modifiedPacks.add(modified);
-                } else {
-                    this.modifiedPacks.add(pack);
-                }
-            }
-            if (!this.modifiedPacks.contains(modified)) {
-                this.modifiedPacks.addFirst(modified);
-            }
+            this.packs.remove(original);
+            this.packs.add(modified);
             this.refresh();
         };
-        final HashSet<String> takenFileNames = new HashSet<>(this.modifiedPacks.stream()
+        final HashSet<String> takenFileNames = new HashSet<>(this.packs.stream()
                 .map(p -> p.info.fileName())
                 .filter(s -> s != dependency.info.fileName())
                 .toList());
@@ -269,20 +303,26 @@ public class DependenciesScreen extends AbstractConfigScreen {
             Zipper.LOG.error("Modpack resources could not be read. This should never happen.");
         }
 
-        // List packs separated by mode
-        final EnumMap<DependencyInfo.Mode, LinkedList<DependencyPack>> sortedPacks = new EnumMap<>(
+        // List packs in order, separated into sections by mode
+        final EnumMap<DependencyInfo.Mode, LinkedList<Pack>> sortedPacks = new EnumMap<>(
                 DependencyInfo.Mode.class);
-        this.modifiedPacks.forEach((final DependencyPack pack) -> {
+        this.packs.forEach((final DependencyPack pack) -> {
             sortedPacks.computeIfAbsent(pack.info.mode(), $ -> new LinkedList<>()).add(pack);
         });
-        populateSection(builder, sortedPacks.getOrDefault(DependencyInfo.Mode.FORCED, new LinkedList<>()),
+        for (final DependencyInfo.Mode mode : DependencyInfo.Mode.values()) {
+            final LinkedList<Pack> unordered = sortedPacks.getOrDefault(mode, new LinkedList<>());
+            sortedPacks.put(mode, new LinkedList<>(unordered.stream()
+                    .sorted(Comparator.comparingInt(p -> this.orderedPackIDs.indexOf(p.getId())))
+                    .toList()));
+        }
+        populateSection(builder, sortedPacks.get(DependencyInfo.Mode.FORCED),
                 true, Component.translatable(KEY + ".section.forced.title"));
-        populateSection(builder, sortedPacks.getOrDefault(DependencyInfo.Mode.OPTIONAL_ENABLED, new LinkedList<>()),
+        populateSection(builder, sortedPacks.get(DependencyInfo.Mode.OPTIONAL_ENABLED),
                 true, Component.translatable(KEY + ".section.optional-enabled.title"));
-        populateSection(builder, sortedPacks.getOrDefault(DependencyInfo.Mode.OPTIONAL_DISABLED, new LinkedList<>()),
+        populateSection(builder, sortedPacks.get(DependencyInfo.Mode.OPTIONAL_DISABLED),
                 false, Component.translatable(KEY + ".section.optional-disabled.title"));
-        populateSection(builder, sortedPacks.getOrDefault(DependencyInfo.Mode.SUPPORT, new LinkedList<>()),
-                false, Component.translatable(KEY + ".section.support.title"));
+        // populateSection(builder, sortedPacks.get(DependencyInfo.Mode.SUPPORT),
+        //         false, Component.translatable(KEY + ".section.support.title"));
 
         // List vanilla packs that can be converted into zipper packs
         final Component sectionTitle = Component.translatable(KEY + ".section.vanilla.title")
@@ -303,18 +343,24 @@ public class DependenciesScreen extends AbstractConfigScreen {
     }
 
     private void populateSection(final SettingsList.SettingsContent.Builder builder,
-            final LinkedList<DependencyPack> packs, final boolean canMove, final Component title) {
+            final LinkedList<Pack> packs, final boolean canMove, final Component title) {
         if (packs.size() == 0)
             return;
+        final Function<Pack, Entry<? extends Pack>> constructEntry = p -> {
+            if (p instanceof final DependencyPack dp) {
+                return new Entry.DependencyEntry(this, dp);
+            }
+            return new Entry<Pack>(this, p);
+        };
         builder.addElement(new StringWidget(title, this.font));
         if (canMove) {
-            Optional<Entry<DependencyPack>> above = Optional.empty();
-            Optional<Entry<DependencyPack>> below = Optional.empty();
+            Optional<Entry<? extends Pack>> above = Optional.empty();
+            Optional<Entry<? extends Pack>> below = Optional.empty();
             for (int i = 0; i < packs.size(); i++) {
-                final Entry<DependencyPack> entry = below.orElse(new Entry.DependencyEntry(this, packs.get(i)));
+                final Entry<? extends Pack> entry = below.orElse(constructEntry.apply(packs.get(i)));
                 if (i + 1 < packs.size()) {
-                    final DependencyPack nextPack = packs.get(i + 1);
-                    below = Optional.of(new Entry.DependencyEntry(this, nextPack));
+                    final Pack nextPack = packs.get(i + 1);
+                    below = Optional.of(constructEntry.apply(nextPack));
                     entry.below = below;
                 }
                 entry.above = above;
@@ -322,8 +368,8 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 builder.addElement(entry);
             }
         } else {
-            for (final DependencyPack pack : packs) {
-                builder.addElement(new Entry.DependencyEntry(this, pack));
+            for (final Pack pack : packs) {
+                builder.addElement(constructEntry.apply(pack));
             }
         }
     }
@@ -334,7 +380,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 .replace(".zip", "");
         final boolean fileExists = Files.exists(DependencyInfo.folder(packType)
                 .resolve(fileName + ".zip"));
-        final boolean isRegistered = this.modifiedPacks.stream()
+        final boolean isRegistered = this.packs.stream()
                 .anyMatch(p -> fileName.equals(p.info.fileName()));
         return fileExists && isRegistered;
     }
@@ -355,7 +401,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
         return Component.translatableWithFallback(KEY + ".button.back", "Apply");
     }
 
-    protected static sealed abstract class Entry<T extends Pack> extends AbstractContainerWidget {
+    protected static sealed class Entry<T extends Pack> extends AbstractContainerWidget {
 
         /** Copied from {@link TransferableSelectionList} */
         private static final int HOVER_OVERLAY = 0xA0909090;
@@ -372,11 +418,11 @@ public class DependenciesScreen extends AbstractConfigScreen {
         protected final LinkedList<Button> interactionButtons;
         public final DependenciesScreen screen;
         public final T pack;
-        public Optional<Entry<DependencyPack>> above = Optional.empty();
-        public Optional<Entry<DependencyPack>> below = Optional.empty();
+        public Optional<Entry<? extends Pack>> above = Optional.empty();
+        public Optional<Entry<? extends Pack>> below = Optional.empty();
 
         public Entry(final DependenciesScreen screen, final T pack) {
-            super(0, 0, screen.getInnerWidth() - 4, 32, pack.getTitle());
+            super(0, 0, screen.getInnerWidth() - 4, PackWidget.HEIGHT, pack.getTitle());
             this.screen = screen;
             this.pack = pack;
 
@@ -398,9 +444,13 @@ public class DependenciesScreen extends AbstractConfigScreen {
             this.arrangeElements();
         }
 
-        public abstract LinkedList<Button> constructInteractionButtons();
+        public LinkedList<Button> constructInteractionButtons() {
+            return new LinkedList<>();
+        }
 
-        public abstract boolean alwaysShowButtons();
+        public boolean alwaysShowButtons() {
+            return false;
+        }
 
         public void arrangeElements() {
             final FrameLayout layout = new FrameLayout();
@@ -428,25 +478,20 @@ public class DependenciesScreen extends AbstractConfigScreen {
         }
 
         /**
-         * Swaps this entry with another entry, swapping their loading priorities and
+         * Swaps this entry with another entry, swapping their position and
          * refreshing the screen.
          * 
-         * @param swapWith The entry to swap loading priorities (positions) with.
+         * @param swapWith The entry to swap position with.
          */
-        public void swapWith(final Entry<DependencyPack> swapWith) {
-            if (!(this.pack instanceof final DependencyPack pack))
+        public void swapWith(final Entry<? extends Pack> swapWith) {
+            final int thisIndex = this.screen.orderedPackIDs.indexOf(this.pack.getId());
+            final int swapIndex = this.screen.orderedPackIDs.indexOf(swapWith.pack.getId());
+            if (thisIndex == -1 || swapIndex == -1)
                 return;
-            final var backup = new LinkedHashSet<>(this.screen.modifiedPacks);
-            this.screen.modifiedPacks.clear();
-            for (final DependencyPack existing : backup) {
-                if (existing == this.pack) {
-                    this.screen.modifiedPacks.add(swapWith.pack);
-                } else if (existing == swapWith.pack) {
-                    this.screen.modifiedPacks.add(pack);
-                } else {
-                    this.screen.modifiedPacks.add(existing);
-                }
-            }
+            this.screen.orderedPackIDs.remove(thisIndex);
+            this.screen.orderedPackIDs.add(thisIndex, swapWith.pack.getId());
+            this.screen.orderedPackIDs.remove(swapIndex);
+            this.screen.orderedPackIDs.add(swapIndex, this.pack.getId());
             this.screen.refresh();
         }
 
@@ -516,6 +561,49 @@ public class DependenciesScreen extends AbstractConfigScreen {
         @Override
         protected void updateWidgetNarration(final NarrationElementOutput narrationElementOutput) {
             narrationElementOutput.add(NarratedElementType.TITLE, this.pack.getTitle());
+        }
+
+        @Override
+        public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
+            final boolean consumed = super.keyPressed(keyCode, scanCode, modifiers);
+            if (this.isFocused()) {
+                final Optional<Entry<?>> target;
+                switch (keyCode) {
+                    case InputConstants.KEY_DOWN:
+                        target = this.below;
+                        break;
+                    case InputConstants.KEY_UP:
+                        target = this.above;
+                        break;
+                    default:
+                        target = Optional.empty();
+                        break;
+                }
+                target.ifPresent(targetEntry -> {
+                    if (Screen.hasShiftDown()) {
+                        this.swapWith(targetEntry);
+                    } else {
+                        this.setFocused(false);
+                        targetEntry.setFocused(true);
+                    }
+                });
+                return true;
+            }
+            return consumed;
+        }
+
+        @Override
+        public void onClick(final double mouseX, final double mouseY) {
+            super.onClick(mouseX, mouseY);
+            this.setFocused(true);
+        }
+
+        @Override
+        public void onRelease(final double mouseX, final double mouseY) {
+            super.onRelease(mouseX, mouseY);
+            if (!this.clicked(mouseX, mouseY)) {
+                this.setFocused(false);
+            }
         }
 
         protected static record PriorityButtons(TransferButton up, TransferButton down) {
@@ -622,11 +710,6 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 return buttons;
             }
 
-            @Override
-            public boolean alwaysShowButtons() {
-                return false;
-            }
-
             public static final class DeleteConfirmationScreen extends AbstractPopupScreen<DependenciesScreen> {
                 private static final int CONFIRM_CD_TICKS = 30;
 
@@ -697,7 +780,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 public void onClose() {
                     super.onClose();
                     if (this.confirmed) {
-                        this.entry.screen.modifiedPacks.remove(this.entry.pack);
+                        this.entry.screen.packs.remove(this.entry.pack);
                         final boolean isEnabled = this.entry.pack.info.type() == PackType.CLIENT_RESOURCES
                                 && this.entry.screen.minecraft.getResourcePackRepository()
                                         .getSelectedIds().contains(this.entry.pack.getId());
@@ -750,11 +833,6 @@ public class DependenciesScreen extends AbstractConfigScreen {
 
                 buttons.add(helpButton);
                 return buttons;
-            }
-
-            @Override
-            public boolean alwaysShowButtons() {
-                return false;
             }
         }
 
@@ -819,7 +897,7 @@ public class DependenciesScreen extends AbstractConfigScreen {
                 } catch (final IOException e) {
                     pack = DependencyPack.from(info, DependencyPack.TEMPLATE_META);
                 }
-                this.screen.modifiedPacks.add(pack);
+                this.screen.packs.add(pack);
                 this.screen.editDependency(pack);
             }
 

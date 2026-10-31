@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import dev.nekotune.zipper.definition.web.Curseforge;
 import dev.nekotune.zipper.definition.web.Modrinth;
@@ -33,13 +34,14 @@ public record DependencyInfo(
         Mode mode,
         EnumMap<DependencyInfo.Host, String> downloadSlugs) {
 
+    private static final Pattern SLUG_PATTERN = Pattern.compile("[\\w-]{1,32}");
+
     /**
      * Validates a given slug string.
      * This validator must ensure that the slug is a valid path.
      */
     public static final Predicate<String> SLUG_VALIDATOR = (final String slug) -> {
-        return (slug.isEmpty() || slug.matches("^[\\w-]+$"))
-            && slug.length() <= 50;
+        return (slug.isEmpty() || SLUG_PATTERN.matcher(slug).matches());
     };
 
     /**
@@ -165,29 +167,31 @@ public record DependencyInfo(
          * and resources,
          * so that they may be overridden.
          */
-        FORCED(true),
+        FORCED(true, true),
 
         /**
          * The dependency will be enabled by default, but users can disable it.
          */
-        OPTIONAL_ENABLED(false),
+        OPTIONAL_ENABLED(false, true),
 
         /**
          * The dependency will be disabled by default, but users can enable it.
          */
-        OPTIONAL_DISABLED(false),
+        OPTIONAL_DISABLED(false, false);
 
         /**
          * The dependency will be downloaded, but will not be added to the game.
          * Use this for when you need to distribute specific assets,
          * modified or otherwise, and still need to support the author.
          */
-        SUPPORT(true);
+        // SUPPORT(true, false);
 
         public final boolean isHidden;
+        public final boolean isOrdered;
 
-        private Mode(final boolean isHidden) {
+        private Mode(final boolean isHidden, final boolean isOrdered) {
             this.isHidden = isHidden;
+            this.isOrdered = isOrdered;
         }
 
         public boolean matches(final DependencyInfo target) {

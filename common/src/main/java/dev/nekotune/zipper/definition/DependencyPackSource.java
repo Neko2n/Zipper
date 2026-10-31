@@ -32,8 +32,8 @@ public class DependencyPackSource implements RepositorySource {
         for (final DependencyInfo dependency : Config.INSTANCE.dependencies) {
             if (dependency.type() != this.packType)
                 continue;
-            if (dependency.mode() == DependencyInfo.Mode.SUPPORT)
-                continue;
+            // if (dependency.mode() == DependencyInfo.Mode.SUPPORT)
+            //     continue;
             if (!Files.exists(dependency.packDir()))
                 continue;
             try {

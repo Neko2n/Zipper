@@ -4,6 +4,7 @@ import dev.nekotune.zipper.Resources;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.SpriteIconButton;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -62,11 +63,16 @@ public abstract class AbstractPopupScreen<T extends Screen> extends Screen {
     }
 
     public final int marginX() {
-        return (this.width - this.popupWidth) / 2;
+        return (this.width - this.getPopupWidth()) / 2;
     }
 
     public final int marginY() {
-        return (this.height - this.popupHeight) / 2;
+        return (this.height - this.getPopupHeight()) / 2;
+    }
+
+    public final ScreenRectangle getPopupRectangle() {
+        return new ScreenRectangle(this.marginX(), this.marginY(),
+                this.getPopupWidth(), this.getPopupHeight());
     }
 
     protected boolean showCloseButton() {
@@ -96,9 +102,8 @@ public abstract class AbstractPopupScreen<T extends Screen> extends Screen {
             final float partialTick) {
         super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderScreenBelow(guiGraphics, mouseX, mouseY, partialTick);
-        guiGraphics.fill(this.marginX(), this.marginY(),
-                this.marginX() + this.getPopupWidth(), this.marginY() + this.getPopupHeight(),
-                this.bgColor());
+        final ScreenRectangle rect = this.getPopupRectangle();
+        guiGraphics.fill(rect.left(), rect.top(), rect.right(), rect.bottom(), this.bgColor());
         this.renderOutline(guiGraphics, mouseX, mouseY, partialTick);
     }
 

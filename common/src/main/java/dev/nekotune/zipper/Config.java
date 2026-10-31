@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,6 +20,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.Since;
 import dev.nekotune.zipper.definition.DependencyInfo;
 import dev.nekotune.zipper.platform.Services;
+import net.minecraft.server.packs.repository.Pack;
 
 public final class Config {
 
@@ -33,17 +37,24 @@ public final class Config {
 
     public static final Config INSTANCE = fromExisting().orElse(new Config());
 
+    // Hides the configuration button from the title screen
     @Since(1.0)
     public boolean production = false;
 
     @Since(1.0)
-    public LinkedHashSet<DependencyInfo> dependencies = new LinkedHashSet<>();
+    public HashSet<DependencyInfo> dependencies = new HashSet<>();
 
+    // Determines which packs should be hidden from selection GUIs
     @Since(1.0)
-    public boolean hideForced = true;
+    public HashSet<String> hiddenPackIDs = new HashSet<>();
 
+    // Overrides the loading logic of existing packs
     @Since(1.0)
-    public boolean hideBuiltIn = true;
+    public HashMap<String, DependencyInfo.Mode> packOverrides = new HashMap<>();
+
+    // Determines the loading order of packs
+    @Since(1.0)
+    public LinkedList<String> orderedPackIDs = new LinkedList<>();
 
     @Since(1.0)
     public boolean warnEnabled = true;
@@ -75,21 +86,24 @@ public final class Config {
      * Returns -1 if the given pack is not in the config.
      */
     public int getLoadOrder(final DependencyInfo info) {
-        int pos = 0;
-        for (final DependencyInfo dependency : this.dependencies) {
-            if (dependency == info)
-                return pos;
-            pos++;
-        }
-        return -1;
+        return this.orderedPackIDs.indexOf(info.packId());
+    }
+
+    public int getLoadOrder(final Pack pack) {
+        return this.orderedPackIDs.indexOf(pack.getId());
     }
 
     /**
      * Saves the current settings to the configuration file.
      */
     public void save() {
-        final String json = GSON.toJson(this);
         try {
+            sanitize(this);
+        } catch (final IllegalStateException e) {
+            Zipper.LOG.error("[Config] save() called on invalid configuration. This should never happen.");
+        }
+        try {
+            final String json = GSON.toJson(this);
             final Path parent = FILE_PATH.getParent();
             if (parent != null) {
                 Files.createDirectories(FILE_PATH.getParent());
@@ -114,10 +128,10 @@ public final class Config {
             final BufferedReader reader = Files.newBufferedReader(filePath);
             final Config config = GSON.fromJson(reader, Config.class);
             reader.close();
-            sanitize(config);
+            config.save();
             Zipper.LOG.debug("[Config] Loading SUCCESS");
             return Optional.of(config);
-        } catch (final IOException | JsonIOException | JsonSyntaxException e) {
+        } catch (final IOException | IllegalStateException | JsonIOException | JsonSyntaxException e) {
             Zipper.LOG.error("[Config] Loading FAILED: " + e.toString());
             try {
                 Path backupPath;
@@ -140,6 +154,10 @@ public final class Config {
     }
 
     private static void sanitize(final Config config) throws IllegalStateException {
+
+        config.orderedPackIDs = new LinkedList<>(config.orderedPackIDs.stream()
+                .distinct()
+                .toList());
 
         // Filter out invalid entries and count number of web dependencies for safety
         final AtomicInteger webDependencies = new AtomicInteger(0);
@@ -170,7 +188,5 @@ public final class Config {
             throw new IllegalStateException("Too many web dependencies. For user safety, downloads are capped at 100.");
         }
         config.dependencies = new LinkedHashSet<>(dependencies);
-
-        config.save();
     }
 }

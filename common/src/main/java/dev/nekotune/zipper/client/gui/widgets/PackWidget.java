@@ -36,6 +36,7 @@ public class PackWidget<T extends Pack> extends AbstractWidget {
 
     private static final String TOO_LONG_NAME_SUFFIX = "...";
     private static final int ICON_SIZE = 32;
+    public static final int HEIGHT = ICON_SIZE;
 
     protected final Minecraft minecraft;
     protected final T pack;
@@ -44,7 +45,7 @@ public class PackWidget<T extends Pack> extends AbstractWidget {
 
     public PackWidget(final Minecraft minecraft, final int x, final int y, final int width,
             final T pack) {
-        super(x, y, width, ICON_SIZE, pack.getTitle());
+        super(x, y, width, HEIGHT, pack.getTitle());
         this.minecraft = minecraft;
         this.pack = pack;
         this.nameDisplayCache = computeName();

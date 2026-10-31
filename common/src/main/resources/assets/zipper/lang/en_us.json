@@ -6,10 +6,8 @@
     "zipper.gui.screen.config.main.button.server-data.tooltip": "Configure data packs",
     "zipper.gui.screen.config.main.production": "Production Mode",
     "zipper.gui.screen.config.main.production.tooltip": "Hides the title screen button.",
-    "zipper.gui.screen.config.main.hide-forced": "Hide Forced Packs",
-    "zipper.gui.screen.config.main.hide-forced.tooltip": "Hides forced resource and data packs from the selection menu.",
-    "zipper.gui.screen.config.main.hide-built-in": "Hide Built-In Packs",
-    "zipper.gui.screen.config.main.hide-built-in.tooltip": "Hides built-in resource and data packs from the selection menu.",
+    "zipper.gui.screen.config.main.hide-forced": "Hide All Forced Packs",
+    "zipper.gui.screen.config.main.hide-forced.tooltip": "Automatically hides all forced zipper packs from selection menus.",
     "zipper.gui.screen.config.main.warn-enabled": "Warnings Enabled",
     "zipper.gui.screen.config.main.warn-enabled.tooltip": "Enables/disables the warning screen when packs could not be downloaded from the internet. Don't disable this unless you're okay with users skipping pack downloads.",
     "zipper.gui.screen.config.main.prompt-enabled": "Reload Prompt Enabled",
@@ -73,5 +71,7 @@
     "zipper.gui.widget.input.ordered-list.add.narration": "Add new item",
 
     "zipper.pack-decorator": " (modpack)",
-    "zipper.modpack-resources.description": "Resources for the modpack"
+    "zipper.modpack-resources.title": "Modpack Resources",
+    "zipper.modpack-resources.description": "Resources for the modpack",
+    "zipper.modpack-resources.credits.title": "Modpack Resources - Dependencies"
 }

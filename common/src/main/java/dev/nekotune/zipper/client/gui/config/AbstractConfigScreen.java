@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
  * Renders a top bar with a title, a scrolling list of settings widgets,
  * and a bottom bar with a button.
  */
-public abstract class AbstractConfigScreen extends Screen {
+public abstract class AbstractConfigScreen<T extends Screen> extends Screen {
 
     public static final String KEY = Resources.Lang.Gui.Screen.KEY + ".config";
     protected static final int MIN_INNER_PADDING = 80;
@@ -21,10 +21,10 @@ public abstract class AbstractConfigScreen extends Screen {
     private static final int BAR_BG_COLOR = 0x65000000;
 
     private final SettingsList settingsList;
-    public final Screen lastScreen;
+    public final T lastScreen;
     public final Button backButton;
 
-    protected AbstractConfigScreen(final Component title, final Screen lastScreen) {
+    protected AbstractConfigScreen(final Component title, final T lastScreen) {
         super(title);
         this.lastScreen = lastScreen;
         this.backButton = Button.builder(Component.empty(), $ -> this.onPressBack())

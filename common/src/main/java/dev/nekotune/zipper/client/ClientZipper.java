@@ -40,20 +40,23 @@ public class ClientZipper {
         });
         PlatformEvents.SCREEN_INIT.hook.connect(screen -> {
             if (screen instanceof final TitleScreen titleScreen) {
-                ConfigButtonHandler.init(Minecraft.getInstance(), titleScreen.children(), (final SpriteIconButton button) -> {
-                    ((ScreenAccessor) titleScreen).zipper$invokeAddRenderableWidget(button);
-                });
+                ConfigButtonHandler.init(Minecraft.getInstance(), titleScreen.children(),
+                        (final SpriteIconButton button) -> {
+                            ((ScreenAccessor) titleScreen).zipper$invokeAddRenderableWidget(button);
+                        });
             }
         });
 
         // Enable OPTIONAL_ENABLED client packs by default
         DownloadManager.onDownloadsFinished.connect(() -> {
             final Minecraft mc = Minecraft.getInstance();
-            Zipper.enableDownloadedOptionals(mc.getResourcePackRepository(), PackType.CLIENT_RESOURCES);
-            final IntegratedServer server = mc.getSingleplayerServer();
-            if (server != null) {
-                Zipper.enableDownloadedOptionals(server.getPackRepository(), PackType.SERVER_DATA);
-            }
+            mc.execute(() -> {
+                Zipper.enableDownloadedOptionals(mc.getResourcePackRepository(), PackType.CLIENT_RESOURCES);
+                final IntegratedServer server = mc.getSingleplayerServer();
+                if (server != null) {
+                    Zipper.enableDownloadedOptionals(server.getPackRepository(), PackType.SERVER_DATA);
+                }
+            });
         });
     }
 
